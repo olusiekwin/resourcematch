@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Resources - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Resources</h1>
+        <div>
+            {% if user.user_type == 'beneficiary' %}
+                <a href="{% url 'request_resource' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Request Resource
+                </a>
+            {% elif user.user_type == 'volunteer' %}
+                <a href="{% url 'offer_resource' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Offer Resource
+                </a>
+            {% endif %}
+            <a href="{% url 'resource_map' %}" class="btn btn-outline-primary ms-2">
+                <i class="bi bi-map"></i> View Map
+            </a>
+        </div>
+    </div>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Filter Resources</h5>
+        </div>
+        <div class="card-body">
+            <form id="resource-filter-form" method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="available" {% if selected_status == 'available' %}selected{% endif %}>Available</option>
+                        <option value="requested" {% if selected_status == 'requested' %}selected{% endif %}>Requested</option>
+                        <option value="in_transit" {% if selected_status == 'in_transit' %}selected{% endif %}>In Transit</option>
+                        <option value="delivered" {% if selected_status == 'delivered' %}selected{% endif %}>Delivered</option>
+                        <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="type" class="form-label">Resource Type</label>
+                    <select name="type" id="type" class="form-select">
+                        <option value="">All Types</option>
+                        {% for type in resource_types %}
+                            <option value="{{ type.name }}" {% if selected_type == type.name %}selected{% endif %}>{{ type.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="distance-range" class="form-label">Maximum Distance: <span id="distance-value">10</span> km</label>
+                    <input type="range" class="form-range" id="distance-range" name="distance" min="1" max="50" value="10">
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% if resources %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for resource in resources %}
+                <div class="col">
+                    <div class="card h-100 resource-card shadow-sm">
+                        <div class="card-header {% if resource.status == 'available' %}bg-success{% elif resource.status == 'requested' %}bg-warning{% elif resource.status == 'in_transit' %}bg-info{% elif resource.status == 'delivered' %}bg-primary{% elif resource.status == 'cancelled' %}bg-danger{% endif %} text-white">
+                            <h5 class="mb-0">{{ resource.name }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="badge bg-light text-dark">{{ resource.resource_type.name }}</span>
+                                <span class="badge {% if resource.status == 'available' %}bg-success{% elif resource.status == 'requested' %}bg-warning{% elif resource.status == 'in_transit' %}bg-info{% elif resource.status == 'delivered' %}bg-primary{% elif resource.status == 'cancelled' %}bg-danger{% endif %}">
+                                    {{ resource.get_status_display }}
+                                </span>
+                            </div>
+                            
+                            <p class="card-text">{{ resource.description|truncatechars:100 }}</p>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <small class="text-muted">Quantity: {{ resource.quantity }}</small>
+                                {% if resource.latitude and resource.longitude and user.latitude and user.longitude %}
+                                    <small class="text-muted">
+                                        <i class="bi bi-geo-alt"></i>
+                                        <span id="distance-{{ resource.id }}">Calculating...</span>
+                                    </small>
+                                    <script>
+                                        document.addEventListener('DOMContentLoaded', function() {
+                                            const distance = calculateDistance(
+                                                {{ user.latitude }}, {{ user.longitude }},
+                                                {{ resource.latitude }}, {{ resource.longitude }}
+                                            );
+                                            document.getElementById('distance-{{ resource.id }}').textContent = 
+                                                distance.toFixed(1) + ' km';
+                                        });
+                                    </script>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-grid">
+                                <a href="{% url 'resource_detail' resource.id %}" class="btn btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="lead mt-3">No resources found matching your criteria.</p>
+            {% if user.user_type == 'beneficiary' %}
+                <a href="{% url 'request_resource' %}" class="btn btn-primary mt-2">Request a Resource</a>
+            {% elif user.user_type == 'volunteer' %}
+                <a href="{% url 'offer_resource' %}" class="btn btn-primary mt-2">Offer a Resource</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

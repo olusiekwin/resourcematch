@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Campaign - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'campaign_list' %}">Campaigns</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Create Campaign</li>
+        </ol>
+    </nav>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow form-card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Create a Fundraising Campaign</h4>
+                </div>
+                <div class="card-body">
+                    <p class="mb-4">Start a campaign to raise funds for individuals or groups in need. Your campaign will be reviewed before it goes live.</p>
+                    
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <p>Please correct the errors below:</p>
+                                {{ form.errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="id_title" class="form-label">Campaign Title</label>
+                            <input type="text" name="title" id="id_title" class="form-control" value="{{ form.title.value|default:'' }}" required>
+                            <div class="form-text">Choose a clear, descriptive title for your campaign.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_category" class="form-label">Beneficiary Category</label>
+                            <select name="category" id="id_category" class="form-select" required>
+                                <option value="">Select a category</option>
+                                <option value="pwd" {% if form.category.value == 'pwd' %}selected{% endif %}>People with Disabilities</option>
+                                <option value="medical" {% if form.category.value == 'medical' %}selected{% endif %}>Medical Conditions</option>
+                                <option value="widows" {% if form.category.value == 'widows' %}selected{% endif %}>Widows</option>
+                                <option value="elderly" {% if form.category.value == 'elderly' %}selected{% endif %}>Elderly Citizens</option>
+                                <option value="education" {% if form.category.value == 'education' %}selected{% endif %}>Education</option>
+                                <option value="other" {% if form.category.value == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                            <div class="form-text">Select the category that best describes the beneficiary of this campaign.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label">Campaign Description</label>
+                            <textarea name="description" id="id_description" class="form-control" rows="5" required>{{ form.description.value|default:'' }}</textarea>
+                            <div class="form-text">Provide a detailed description of your campaign, including why you're raising funds and how they will be used.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_goal_amount" class="form-label">Goal Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="goal_amount" id="id_goal_amount" class="form-control" value="{{ form.goal_amount.value|default:'' }}" min="1" step="0.01" required>
+                            </div>
+                            <div class="form-text">Set a realistic fundraising goal for your campaign.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_end_date" class="form-label">End Date</label>
+                            <input type="date" name="end_date" id="id_end_date" class="form-control" value="{{ form.end_date.value|date:'Y-m-d'|default:'' }}" required>
+                            <div class="form-text">Set an end date for your campaign. Campaigns typically run for 30-60 days.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_image" class="form-label">Campaign Image</label>
+                            <input type="file" name="image" id="id_image" class="form-control" accept="image/*">
+                            <div class="form-text">Upload an image that represents your campaign. Recommended size: 1200x630 pixels.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_location" class="form-label">Location</label>
+                            <input type="text" name="location" id="id_location" class="form-control" value="{{ form.location.value|default:'' }}" required>
+                            <div class="form-text">Enter the location where the funds will be used.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_beneficiary_description" class="form-label">Beneficiary Details</label>
+                            <textarea name="beneficiary_description" id="id_beneficiary_description" class="form-control" rows="3">{{ form.beneficiary_description.value|default:'' }}</textarea>
+                            <div class="form-text">Provide details about the beneficiary or beneficiaries of this campaign.</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'campaign_list' %}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Create Campaign</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

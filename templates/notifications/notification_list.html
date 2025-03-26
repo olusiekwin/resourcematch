@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Notifications</h1>
+        {% if notifications %}
+            <form method="post" action="{% url 'mark_all_read' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="bi bi-check-all"></i> Mark All as Read
+                </button>
+            </form>
+        {% endif %}
+    </div>
+    
+    {% if notifications %}
+        <div class="card shadow">
+            <div class="list-group list-group-flush">
+                {% for notification in notifications %}
+                    <a href="{% url 'notification_detail' notification.id %}" class="list-group-item list-group-item-action {% if not notification.is_read %}notification-unread{% endif %}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ notification.title }}</h5>
+                            <small class="text-muted">{{ notification.created_at|date:"M d, g:i a" }}</small>
+                        </div>
+                        <p class="mb-1">{{ notification.message }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-primary">Click to view details</small>
+                            {% if not notification.is_read %}
+                                <span class="badge bg-primary rounded-pill"></span>
+                            {% endif %}
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-bell-slash display-1 text-muted"></i>
+            <p class="lead mt-3">You don't have any notifications.</p>
+            <p>When you receive notifications, they will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

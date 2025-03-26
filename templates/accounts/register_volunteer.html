@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+
+{% block title %}Register as Volunteer - Resource Match{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0">Register as Volunteer</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <h4 class="mb-3">Account Information</h4>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
+                            <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}" 
+                                   class="form-control {% if form.username.errors %}is-invalid{% endif %}" 
+                                   value="{{ form.username.value|default:'' }}">
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback">{{ form.username.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                            <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" 
+                                   class="form-control {% if form.email.errors %}is-invalid{% endif %}" 
+                                   value="{{ form.email.value|default:'' }}">
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback">{{ form.email.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.password1.id_for_label }}" class="form-label">Password</label>
+                            <input type="password" name="{{ form.password1.name }}" id="{{ form.password1.id_for_label }}" 
+                                   class="form-control {% if form.password1.errors %}is-invalid{% endif %}">
+                            {% if form.password1.errors %}
+                                <div class="invalid-feedback">{{ form.password1.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.password2.id_for_label }}" class="form-label">Confirm Password</label>
+                            <input type="password" name="{{ form.password2.name }}" id="{{ form.password2.id_for_label }}" 
+                                   class="form-control {% if form.password2.errors %}is-invalid{% endif %}">
+                            {% if form.password2.errors %}
+                                <div class="invalid-feedback">{{ form.password2.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <h4 class="mb-3 mt-4">Personal Information</h4>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name</label>
+                            <input type="text" name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}" 
+                                   class="form-control {% if form.first_name.errors %}is-invalid{% endif %}" 
+                                   value="{{ form.first_name.value|default:'' }}">
+                            {% if form.first_name.errors %}
+                                <div class="invalid-feedback">{{ form.first_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name</label>
+                            <input type="text" name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}" 
+                                   class="form-control {% if form.last_name.errors %}is-invalid{% endif %}" 
+                                   value="{{ form.last_name.value|default:'' }}">
+                            {% if form.last_name.errors %}
+                                <div class="invalid-feedback">{{ form.last_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number</label>
+                            <input type="tel" name="{{ form.phone_number.name }}" id="{{ form.phone_number.id_for_label }}" 
+                                   class="form-control {% if form.phone_number.errors %}is-invalid{% endif %}" 
+                                   value="{{ form.phone_number.value|default:'' }}">
+                            {% if form.phone_number.errors %}
+                                <div class="invalid-feedback">{{ form.phone_number.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ volunteer_form.transportation_type.id_for_label }}" class="form-label">Transportation Type</label>
+                            <select name="{{ volunteer_form.transportation_type.name }}" 
+                                    id="{{ volunteer_form.transportation_type.id_for_label }}" 
+                                    class="form-select {% if volunteer_form.transportation_type.errors %}is-invalid{% endif %}">
+                                <option value="">Select transportation type</option>
+                                <option value="car" {% if volunteer_form.transportation_type.value == 'car' %}selected{% endif %}>Car</option>
+                                <option value="bicycle" {% if volunteer_form.transportation_type.value == 'bicycle' %}selected{% endif %}>Bicycle</option>
+                                <option value="public_transport" {% if volunteer_form.transportation_type.value == 'public_transport' %}selected{% endif %}>Public Transport</option>
+                                <option value="walking" {% if volunteer_form.transportation_type.value == 'walking' %}selected{% endif %}>Walking</option>
+                                <option value="other" {% if volunteer_form.transportation_type.value == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                            {% if volunteer_form.transportation_type.errors %}
+                                <div class="invalid-feedback">{{ volunteer_form.transportation_type.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
+                        <input type="text" name="{{ form.address.name }}" id="{{ form.address.id_for_label }}" 
+                               class="form-control {% if form.address.errors %}is-invalid{% endif %}" 
+                               value="{{ form.address.value|default:'' }}">
+                        {% if form.address.errors %}
+                            <div class="invalid-feedback">{{ form.address.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ volunteer_form.bio.id_for_label }}" class="form-label">Bio</label>
+                        <textarea name="{{ volunteer_form.bio.name }}" 
+                                  id="{{ volunteer_form.bio.id_for_label }}" 
+                                  class="form-control {% if volunteer_form.bio.errors %}is-invalid{% endif %}" 
+                                  rows="3" placeholder="Tell us a bit about yourself and why you want to volunteer">{{ volunteer_form.bio.value|default:'' }}</textarea>
+                        {% if volunteer_form.bio.errors %}
+                            <div class="invalid-feedback">{{ volunteer_form.bio.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ volunteer_form.max_distance_km.id_for_label }}" class="form-label">Maximum Distance (km)</label>
+                        <input type="number" name="{{ volunteer_form.max_distance_km.name }}" 
+                               id="{{ volunteer_form.max_distance_km.id_for_label }}" 
+                               class="form-control {% if volunteer_form.max_distance_km.errors %}is-invalid{% endif %}" 
+                               value="{{ volunteer_form.max_distance_km.value|default:'10' }}" min="1" max="50">
+                        <div class="form-text">How far are you willing to travel to deliver resources?</div>
+                        {% if volunteer_form.max_distance_km.errors %}
+                            <div class="invalid-feedback">{{ volunteer_form.max_distance_km.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <h4 class="mb-3 mt-4">Availability</h4>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="monday" name="availability_monday">
+                                        <label class="form-check-label" for="monday">Monday</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <select class="form-select" name="availability_monday_time">
+                                        <option value="morning">Morning</option>
+                                        <option value="afternoon">Afternoon</option>
+                                        <option value="evening">Evening</option>
+                                        <option value="all_day">All Day</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="tuesday" name="availability_tuesday">
+                                        <label class="form-check-label" for="tuesday">Tuesday</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <select class="form-select" name="availability_tuesday_time">
+                                        <option value="morning">Morning</option>
+                                        <option value="afternoon">Afternoon</option>
+                                        <option value="evening">Evening</option>
+                                        <option value="all_day">All Day</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Repeat for other days of the week -->
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the <a href="{% url 'terms' %}" target="_blank">Terms of Service</a> and <a href="{% url 'privacy' %}" target="_blank">Privacy Policy</a>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">Register as Volunteer</button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the address input field
+    const addressInput = document.getElementById('{{ form.address.id_for_label }}');
+    
+    // Initialize the map (hidden initially)
+    const mapDiv = document.createElement('div');
+    mapDiv.id = 'location-map';
+    mapDiv.style.height = '300px';
+    mapDiv.style.marginTop = '10px';
+    mapDiv.style.display = 'none';
+    
+    // Insert the map after the address input
+    addressInput.parentNode.insertBefore(mapDiv, addressInput.nextSibling);
+    
+    // Create a button to get current location
+    const locationBtn = document.createElement('button');
+    locationBtn.type = 'button';
+    locationBtn.className = 'btn btn-outline-secondary mt-2';
+    locationBtn.innerHTML = '<i class="bi bi-geo-alt"></i> Use My Current Location';
+    
+    // Insert the button after the map
+    addressInput.parentNode.insertBefore(locationBtn, mapDiv.nextSibling);
+    
+    // Initialize the map
+    const map = L.map('location-map').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    let marker;
+    
+    // Function to update the map with a location
+    function updateMap(lat, lng, address) {
+        mapDiv.style.display = 'block';
+        map.setView([lat, lng], 15);
+        
+        if (marker) {
+            marker.setLatLng([lat, lng]);
+        } else {
+            marker = L.marker([lat, lng]).addTo(map);
+        }
+        
+        if (address) {
+            addressInput.value = address;
+        }
+        
+        // Add hidden inputs for latitude and longitude
+        let latInput = document.getElementById('id_latitude');
+        let lngInput = document.getElementById('id_longitude');
+        
+        if (!latInput) {
+            latInput = document.createElement('input');
+            latInput.type = 'hidden';
+            latInput.name = 'latitude';
+            latInput.id = 'id_latitude';
+            addressInput.parentNode.appendChild(latInput);
+        }
+        
+        if (!lngInput) {
+            lngInput = document.createElement('input');
+            lngInput.type = 'hidden';
+            lngInput.name = 'longitude';
+            lngInput.id = 'id_longitude';
+            addressInput.parentNode.appendChild(lngInput);
+        }
+        
+        latInput.value = lat;
+        lngInput.value = lng;
+    }
+    
+    // Get current location when the button is clicked
+    locationBtn.addEventListener('click', function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // Reverse geocode to get address
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const address = data.display_name;
+                            updateMap(lat, lng, address);
+                        })
+                        .catch(error => {
+                            console.error('Error getting address:', error);
+                            updateMap(lat, lng);
+                        });
+                },
+                function(error) {
+                    console.error('Error getting location:', error);
+                    alert('Unable to get your location. Please enter your address manually.');
+                }
+            );
+        } else {
+            alert('Geolocation is not supported by your browser. Please enter your address manually.');
+        }
+    });
+    
+    // Geocode address when it changes
+    addressInput.addEventListener('blur', function() {
+        const address = addressInput.value.trim();
+        if (address) {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lng = parseFloat(data[0].lon);
+                        updateMap(lat, lng);
+                    } else {
+                        mapDiv.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error geocoding address:', error);
+                    mapDiv.style.display = 'none';
+                });
+        } else {
+            mapDiv.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Request Resource - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'resource_list' %}">Resources</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Request Resource</li>
+        </ol>
+    </nav>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow form-card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Request a Resource</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <p>Please correct the errors below:</p>
+                                {{ form.errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="id_resource_type" class="form-label">Resource Type</label>
+                            <select name="resource_type" id="id_resource_type" class="form-select" required>
+                                <option value="">Select a resource type</option>
+                                {% for type in form.fields.resource_type.queryset %}
+                                    <option value="{{ type.id }}" {% if form.resource_type.value == type.id %}selected{% endif %}>{{ type.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Select the type of resource you need.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_name" class="form-label">Resource Name</label>
+                            <input type="text" name="name" id="id_name" class="form-control" value="{{ form.name.value|default:'' }}" required>
+                            <div class="form-text">Provide a clear, descriptive name for the resource you need.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label">Description</label>
+                            <textarea name="description" id="id_description" class="form-control" rows="4" required>{{ form.description.value|default:'' }}</textarea>
+                            <div class="form-text">Describe what you need in detail. Include any specific requirements or preferences.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_quantity" class="form-label">Quantity</label>
+                            <input type="number" name="quantity" id="id_quantity" class="form-control" value="{{ form.quantity.value|default:'1' }}" min="1" required>
+                            <div class="form-text">How many units of this resource do you need?</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Location</label>
+                            <div id="location-map" style="height: 300px;" class="rounded border mb-2"></div>
+                            <div class="form-text mb-2">Your request will use your profile location by default. You can adjust the pin on the map to specify a different location.</div>
+                            
+                            <input type="hidden" name="latitude" id="id_latitude" value="{{ form.latitude.value|default:user.latitude }}">
+                            <input type="hidden" name="longitude" id="id_longitude" value="{{ form.longitude.value|default:user.longitude }}">
+                            
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="use-profile-location" checked>
+                                <label class="form-check-label" for="use-profile-location">
+                                    Use my profile location
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'resource_list' %}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Submit Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize map if the element exists
+        const locationMap = document.getElementById('location-map');
+        if (locationMap && typeof L !== 'undefined') {
+            // Default location (center of map if no user location)
+            let lat = 51.505;
+            let lng = -0.09;
+            let zoom = 13;
+            
+            // Use user's location if available
+            {% if user.latitude and user.longitude %}
+                lat = {{ user.latitude }};
+                lng = {{ user.longitude }};
+                zoom = 15;
+            {% endif %}
+            
+            // Use form values if available
+            {% if form.latitude.value and form.longitude.value %}
+                lat = {{ form.latitude.value }};
+                lng = {{ form.longitude.value }};
+                zoom = 15;
+            {% endif %}
+            
+            const map = L.map('location-map').setView([lat, lng], zoom);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Add draggable marker
+            const marker = L.marker([lat, lng], {
+                draggable: true
+            }).addTo(map);
+            
+            // Update hidden inputs when marker is dragged
+            marker.on('dragend', function(event) {
+                const position = marker.getLatLng();
+                document.getElementById('id_latitude').value = position.lat;
+                document.getElementById('id_longitude').value = position.lng;
+                
+                // Uncheck "use profile location" when marker is manually moved
+                document.getElementById('use-profile-location').checked = false;
+            });
+            
+            // Handle "use profile location" checkbox
+            const useProfileLocationCheckbox = document.getElementById('use-profile-location');
+            useProfileLocationCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    {% if user.latitude and user.longitude %}
+                        document.getElementById('id_latitude').value = {{ user.latitude }};
+                        document.getElementById('id_longitude').value = {{ user.longitude }};
+                        marker.setLatLng([{{ user.latitude }}, {{ user.longitude }}]);
+                        map.setView([{{ user.latitude }}, {{ user.longitude }}], 15);
+                    {% endif %}
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}
+

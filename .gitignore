@@ -1,0 +1,47 @@
+# Python bytecode
+*.pyc
+*.pyo
+__pycache__/
+
+# Virtual environment
+venv/
+env/
+
+# Django migrations
+*/migrations/*
+
+# Database files
+*.sqlite3
+
+# Media files
+media/
+
+# Static files (if you're using a different directory for static files, adjust this)
+static/
+
+# IDEs and Editors
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Coverage reports
+.coverage
+*.coveragerc
+
+# Pytest
+.cache
+
+# mypy
+.mypy_cache/
+
+# Sphinx
+docs/_build/
+
+# Log files
+*.log
+
+# Environment variables
+.env

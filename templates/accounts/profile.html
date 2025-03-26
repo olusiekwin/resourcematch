@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Profile Information</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="avatar-circle bg-primary text-white mb-3">
+                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                    </div>
+                    <h4>{{ user.get_full_name }}</h4>
+                    <p class="text-muted">{{ user.get_user_type_display }}</p>
+                    <p><i class="bi bi-envelope"></i> {{ user.email }}</p>
+                    {% if user.phone_number %}
+                        <p><i class="bi bi-telephone"></i> {{ user.phone_number }}</p>
+                    {% endif %}
+                    {% if user.address %}
+                        <p><i class="bi bi-geo-alt"></i> {{ user.address }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if user.user_type == 'volunteer' %}
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Volunteer Stats</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Resources Offered:</strong> {{ user.volunteer_profile.offered_resources.count }}</p>
+                        <p><strong>Completed Matches:</strong> {{ user.volunteer_profile.volunteer_matches.filter.count }}</p>
+                        <p><strong>Max Distance:</strong> {{ user.volunteer_profile.max_distance_km }} km</p>
+                        <p><strong>Status:</strong> {% if user.volunteer_profile.active %}Active{% else %}Inactive{% endif %}</p>
+                        <p><strong>Verified:</strong> {% if user.volunteer_profile.verified %}Yes{% else %}No{% endif %}</p>
+                    </div>
+                </div>
+            {% elif user.user_type == 'beneficiary' %}
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Beneficiary Stats</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Resources Requested:</strong> {{ user.beneficiary_profile.requested_resources.count }}</p>
+                        <p><strong>Received Matches:</strong> {{ user.beneficiary_profile.beneficiary_matches.filter.count }}</p>
+                        {% if user.beneficiary_profile.mobility_limitations %}
+                            <p><strong>Mobility Limitations:</strong> Yes</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Edit Profile</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <p>Please correct the errors below:</p>
+                                {{ user_form.errors }}
+                                {% if profile_form %}{{ profile_form.errors }}{% endif %}
+                            </div>
+                        {% endif %}
+                        
+                        <h5 class="border-bottom pb-2 mb-3">Basic Information</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="id_first_name" class="form-label">First Name</label>
+                                <input type="text" name="first_name" id="id_first_name" class="form-control" value="{{ user.first_name }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_last_name" class="form-label">Last Name</label>
+                                <input type="text" name="last_name" id="id_last_name" class="form-control" value="{{ user.last_name }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="id_email" class="form-label">Email</label>
+                                <input type="email" name="email" id="id_email" class="form-control" value="{{ user.email }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_phone_number" class="form-label">Phone Number</label>
+                                <input type="text" name="phone_number" id="id_phone_number" class="form-control" value="{{ user.phone_number }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_address" class="form-label">Address</label>
+                            <input type="text" name="address" id="id_address" class="form-control" value="{{ user.address }}">
+                        </div>
+                        
+                        {% if user.user_type == 'beneficiary' and profile_form %}
+                            <h5 class="border-bottom pb-2 mb-3 mt-4">Beneficiary Information</h5>
+                            
+                            <div class="mb-3">
+                                <label for="id_needs_description" class="form-label">Needs Description</label>
+                                <textarea name="needs_description" id="id_needs_description" class="form-control" rows="3">{{ user.beneficiary_profile.needs_description }}</textarea>
+                                <div class="form-text">Describe your needs to help volunteers understand how they can assist you.</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="id_emergency_contact_name" class="form-label">Emergency Contact Name</label>
+                                    <input type="text" name="emergency_contact_name" id="id_emergency_contact_name" class="form-control" value="{{ user.beneficiary_profile.emergency_contact_name }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_emergency_contact_phone" class="form-label">Emergency Contact Phone</label>
+                                    <input type="text" name="emergency_contact_phone" id="id_emergency_contact_phone" class="form-control" value="{{ user.beneficiary_profile.emergency_contact_phone }}">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" name="mobility_limitations" id="id_mobility_limitations" class="form-check-input" {% if user.beneficiary_profile.mobility_limitations %}checked{% endif %}>
+                                <label for="id_mobility_limitations" class="form-check-label">I have mobility limitations</label>
+                            </div>
+                        {% elif user.user_type == 'volunteer' and profile_form %}
+                            <h5 class="border-bottom pb-2 mb-3 mt-4">Volunteer Information</h5>
+                            
+                            <div class="mb-3">
+                                <label for="id_bio" class="form-label">Bio</label>
+                                <textarea name="bio" id="id_bio" class="form-control" rows="3">{{ user.volunteer_profile.bio }}</textarea>
+                                <div class="form-text">Tell beneficiaries about yourself and how you can help.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_transportation_type" class="form-label">Transportation Type</label>
+                                <input type="text" name="transportation_type" id="id_transportation_type" class="form-control" value="{{ user.volunteer_profile.transportation_type }}">
+                                <div class="form-text">How do you travel? (e.g., Car, Bicycle, Public Transport)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_max_distance_km" class="form-label">Maximum Distance (km)</label>
+                                <input type="number" name="max_distance_km" id="id_max_distance_km" class="form-control" value="{{ user.volunteer_profile.max_distance_km }}">
+                                <div class="form-text">How far are you willing to travel to help beneficiaries?</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Availability</label>
+                                <div id="availability-picker" class="border rounded p-3">
+                                    <!-- This will be populated by JavaScript -->
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input availability-day" id="avail-monday" data-day="monday">
+                                                <label class="form-check-label" for="avail-monday">Monday</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input availability-day" id="avail-tuesday" data-day="tuesday">
+                                                <label class="form-check-label" for="avail-tuesday">Tuesday</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input availability-day" id="avail-wednesday" data-day="wednesday">
+                                                <label class="form-check-label" for="avail-wednesday">Wednesday</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input availability-day" id="avail-thursday" data-day="thursday">
+                                                <label class="form-check-label" for="avail-thursday">Thursday</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input availability-day" id="avail-friday" data-day="friday">
+                                                <label class="form-check-label" for="avail-friday">Friday</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input availability-day" id="avail-saturday" data-day="saturday">
+                                                <label class="form-check-label" for="avail-saturday">Saturday</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input availability-day" id="avail-sunday" data-day="sunday">
+                                                <label class="form-check-label" for="avail-sunday">Sunday</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="availability" id="id_availability" value="{{ user.volunteer_profile.availability|default:'{}' }}">
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle availability picker
+        const availabilityInput = document.getElementById('id_availability');
+        const availabilityDays = document.querySelectorAll('.availability-day');
+        
+        if (availabilityInput && availabilityDays.length > 0) {
+            // Load saved availability
+            try {
+                const availability = JSON.parse(availabilityInput.value);
+                
+                // Set checkboxes based on saved data
+                availabilityDays.forEach(checkbox => {
+                    const day = checkbox.dataset.day;
+                    if (availability[day]) {
+                        checkbox.checked = true;
+                    }
+                });
+            } catch (e) {
+                console.error('Error parsing availability JSON:', e);
+            }
+            
+            // Update hidden input when checkboxes change
+            availabilityDays.forEach(checkbox => {
+                checkbox.addEventListener('change', updateAvailability);
+            });
+            
+            function updateAvailability() {
+                const availability = {};
+                
+                availabilityDays.forEach(checkbox => {
+                    const day = checkbox.dataset.day;
+                    availability[day] = checkbox.checked;
+                });
+                
+                availabilityInput.value = JSON.stringify(availability);
+            }
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}
+

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Notification - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'notification_list' %}">Notifications</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Notification Details</li>
+        </ol>
+    </nav>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">{{ notification.title }}</h4>
+                </div>
+                <div class="card-body">
+                    <p>{{ notification.message }}</p>
+                    <p class="text-muted">{{ notification.created_at|date:"F j, Y, g:i a" }}</p>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'notification_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Notifications
+                        </a>
+                        
+                        {% if notification.link %}
+                            <a href="{{ notification.link }}" class="btn btn-primary">
+                                <i class="bi bi-link-45deg"></i> View Related Item
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

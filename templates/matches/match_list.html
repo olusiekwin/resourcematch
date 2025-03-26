@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+
+{% block title %}Matches - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>My Matches</h1>
+    </div>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Filter Matches</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Statuses</option>
+                        <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="accepted" {% if selected_status == 'accepted' %}selected{% endif %}>Accepted</option>
+                        <option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                        <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completed</option>
+                        <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% if matches %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for match in matches %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header {% if match.status == 'pending' %}bg-warning{% elif match.status == 'accepted' %}bg-info{% elif match.status == 'in_progress' %}bg-primary{% elif match.status == 'completed' %}bg-success{% elif match.status == 'cancelled' %}bg-danger{% endif %} text-white">
+                            <h5 class="mb-0">{{ match.resource.name }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">{{ match.resource.description|truncatechars:100 }}</p>
+                            
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="badge bg-light text-dark">{{ match.resource.resource_type.name }}</span>
+                                <span class="badge {% if match.status == 'pending' %}bg-warning{% elif match.status == 'accepted' %}bg-info{% elif match.status == 'in_progress' %}bg-primary{% elif match.status == 'completed' %}bg-success{% elif match.status == 'cancelled' %}bg-danger{% endif %}">
+                                    {{ match.get_status_display }}
+                                </span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                {% if user.user_type == 'beneficiary' %}
+                                    <p><strong>Volunteer:</strong> {{ match.volunteer.user.get_full_name|default:match.volunteer.user.username }}</p>
+                                {% elif user.user_type == 'volunteer' %}
+                                    <p><strong>Beneficiary:</strong> {{ match.beneficiary.user.get_full_name|default:match.beneficiary.user.username }}</p>
+                                {% endif %}
+                                <p><strong>Created:</strong> {{ match.created_at|date:"M d, Y" }}</p>
+                                {% if match.estimated_arrival %}
+                                    <p><strong>Estimated Arrival:</strong> {{ match.estimated_arrival|date:"M d, Y, g:i a" }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-grid">
+                                <a href="{% url 'match_detail' match.id %}" class="btn btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-people display-1 text-muted"></i>
+            <p class="lead mt-3">You don't have any matches yet.</p>
+            {% if user.user_type == 'beneficiary' %}
+                <p>Once a volunteer is matched with your resource request, it will appear here.</p>
+            {% elif user.user_type == 'volunteer' %}
+                <p>You can volunteer for resource requests to create matches.</p>
+                <a href="{% url 'resource_list' %}?status=requested" class="btn btn-primary mt-2">Browse Requests</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+```html project="ResourceMatch" file="templates/matches/match_detail.html" type="code"
+{% extends 'base.html' %}
+
+{% block title %}Match Details - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'match_list' %}">Matches</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Match Details</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header {% if match.status == 'pending' %}bg-warning{% elif match.status == 'accepted' %}bg-info{% elif match.status == 'in_progress' %}bg-primary{% elif match.status == 'completed' %}bg-success{% elif match.status == 'cancelled' %}bg-danger{% endif %} text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Match: {{ match.resource.name }}</h4>
+                        <span class="badge bg-light text-dark">{{ match.resource.resource_type.name }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2">Resource Details</h5>
+                        <p>{{ match.resource.description }}</p>
+                        <p><strong>Quantity:</strong> {{ match.resource.quantity }}</p>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="border-bottom pb-2">Beneficiary</h5>
+                            <p><strong>Name:</strong> {{ match.beneficiary.user.get_full_name|default:match.beneficiary.user.username }}</p>
+                            {% if user.is_staff or match.volunteer.user == user %}
+                                <p><strong>Phone:</strong> {{ match.beneficiary.user.phone_number|default:"Not provided" }}</p>
+                                <p><strong>Email:</strong> {{ match.beneficiary.user.email|default:"Not provided" }}</p>
+                                <p><strong>Address:</strong> {{ match.beneficiary.user.address|default:"Not provided" }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="border-bottom pb-2">Volunteer</h5>
+                            <p><strong>Name:</strong> {{ match.volunteer.user.get_full_name|default:match.volunteer.user.username }}</p>
+                            {% if user.is_staff or match.beneficiary.user == user %}
+                                <p><strong>Phone:</strong> {{ match.volunteer.user.phone_number|default:"Not provided" }}</p>
+                                <p><strong>Email:</strong> {{ match.volunteer.user.email|default:"Not provided" }}</p>
+                                <p><strong>Transportation:</strong> {{ match.volunteer.transportation_type|default:"Not specified" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if match.notes %}
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Notes</h5>
+                            <p>{{ match.notes }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if match.estimated_arrival %}
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Estimated Arrival</h5>
+                            <p>{{ match.estimated_arrival|date:"F j, Y, g:i a" }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if match.resource.latitude and match.resource.longitude %}
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Location</h5>
+                            <div id="match-map" style="height: 300px;" class="rounded border"></div>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'match_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Matches
+                        </a>
+                        
+                        <div>
+                            {% if user.user_type == 'volunteer' and match.volunteer.user == user %}
+                                {% if match.status == 'pending' %}
+                                    <form method="post" action="{% url 'accept_match' match.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-success me-2" onclick="return confirm('Are you sure you want to accept this match?')">
+                                            <i class="bi bi-check-circle"></i> Accept Match
+                                        </button>
+                                    </form>
+                                {% elif match.status == 'accepted' %}
+                                    <form method="post" action="{% url 'complete_match' match.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-success me-2" onclick="return confirm('Are you sure you want to mark this match as completed?')">
+                                            <i class="bi bi-check-circle"></i> Mark as Completed
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                
+                                {% if match.status != 'completed' and match.status != 'cancelled' %}
+                                    <form method="post" action="{% url 'cancel_match' match.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this match?')">
+                                            <i class="bi bi-x-circle"></i> Cancel Match
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            {% elif user.user_type == 'beneficiary' and match.beneficiary.user == user %}
+                                {% if match.status != 'completed' and match.status != 'cancelled' %}
+                                    <form method="post" action="{% url 'cancel_match' match.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this match?')">
+                                            <i class="bi bi-x-circle"></i> Cancel Match
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if match.feedbacks.exists %}
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Feedback</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for feedback in match.feedbacks.all %}
+                            <div class="mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6>
+                                        {% if feedback.is_from_beneficiary %}
+                                            Feedback from Beneficiary
+                                        {% else %}
+                                            Feedback from Volunteer
+                                        {% endif %}
+                                    </h6>
+                                    <div class="rating-stars">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= feedback.rating %}
+                                                <i class="bi bi-star-fill"></i>
+                                            {% else %}
+                                                <i class="bi bi-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <p>{{ feedback.comment }}</p>
+                                <small class="text-muted">{{ feedback.created_at|date:"F j, Y" }}</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Match Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <div class="display-1 mb-2">
+                            {% if match.status == 'pending' %}
+                                <i class="bi bi-hourglass-split text-warning"></i>
+                            {% elif match.status == 'accepted' %}
+                                <i class="bi bi-check-circle text-info"></i>
+                            {% elif match.status == 'in_progress' %}
+                                <i class="bi bi-truck text-primary"></i>
+                            {% elif match.status == 'completed' %}
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            {% elif match.status == 'cancelled' %}
+                                <i class="bi bi-x-circle-fill text-danger"></i>
+                            {% endif %}
+                        </div>
+                        <h4>{{ match.get_status_display }}</h4>
+                    </div>
+                    
+                    <div class="progress mb-3">
+                        {% if match.status == 'pending' %}
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 25%"></div>
+                        {% elif match.status == 'accepted' %}
+                            <div class="progress-bar bg-info" role="progressbar" style="width: 50%"></div>
+                        {% elif match.status == 'in_progress' %}
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: 75%"></div>
+                        {% elif match.status == 'completed' %}
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+                        {% elif match.status == 'cancelled' %}
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 100%"></div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-center">
+                        <p class="text-muted">Last updated: {{ match.updated_at|date:"F j, Y, g:i a" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            {% if match.status == 'completed' and not has_feedback %}
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Give Feedback</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>The match has been completed. Please provide your feedback on the experience.</p>
+                        <div class="d-grid">
+                            <a href="{% url 'give_feedback' match.id %}" class="btn btn-primary">
+                                <i class="bi bi-star"></i> Give Feedback
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            {% if user.latitude and user.longitude and match.resource.latitude and match.resource.longitude %}
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Distance</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="display-4 mb-2" id="distance-value">
+                            Calculating...
+                        </div>
+                        <p class="text-muted">Distance from your location</p>
+                    </div>
+                </div>
+                
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const distance = calculateDistance(
+                            {{ user.latitude }}, {{ user.longitude }},
+                            {{ match.resource.latitude }}, {{ match.resource.longitude }}
+                        );
+                        document.getElementById('distance-value').textContent = 
+                            distance.toFixed(1) + ' km';
+                    });
+                </script>
+            {% endif %}
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-calendar-plus text-primary me-2"></i>
+                                Match Created
+                            </div>
+                            <small>{{ match.created_at|date:"M d, Y" }}</small>
+                        </li>
+                        
+                        {% if match.status != 'pending' and match.status != 'cancelled' %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-check-circle text-info me-2"></i>
+                                    Match Accepted
+                                </div>
+                                <small>{{ match.updated_at|date:"M d, Y" }}</small>
+                            </li>
+                        {% endif %}
+                        
+                        {% if match.status == 'completed' %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    Match Completed
+                                </div>
+                                <small>{{ match.updated_at|date:"M d, Y" }}</small>
+                            </li>
+                        {% endif %}
+                        
+                        {% if match.status == 'cancelled' %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                                    Match Cancelled
+                                </div>
+                                <small>{{ match.updated_at|date:"M d, Y" }}</small>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize map if the element exists
+        const matchMap = document.getElementById('match-map');
+        if (matchMap && typeof L !== 'undefined') {
+            const map = L.map('match-map').setView([51.505, -0.09], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Add resource marker
+            {% if match.resource.latitude and match.resource.longitude %}
+                map.setView([{{ match.resource.latitude }}, {{ match.resource.longitude }}], 13);
+                L.marker([{{ match.resource.latitude }}, {{ match.resource.longitude }}])
+                    .addTo(map)
+                    .bindPopup('{{ match.resource.name }}')
+                    .openPopup();
+            {% endif %}
+            
+            // Add user marker if available
+            {% if user.latitude and user.longitude %}
+                L.marker([{{ user.latitude }}, {{ user.longitude }}], {
+                    icon: L.divIcon({
+                        className: 'user-marker',
+                        html: '<i class="bi bi-person-fill" style="font-size: 24px; color: #0d6efd;"></i>',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    })
+                }).addTo(map)
+                    .bindPopup('Your Location');
+                
+                // Draw line between user and resource
+                const latlngs = [
+                    [{{ user.latitude }}, {{ user.longitude }}],
+                    [{{ match.resource.latitude }}, {{ match.resource.longitude }}]
+                ];
+                L.polyline(latlngs, {color: '#0d6efd'}).addTo(map);
+                
+                // Fit bounds to show both markers
+                map.fitBounds(latlngs, {padding: [50, 50]});
+            {% endif %}
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}
+

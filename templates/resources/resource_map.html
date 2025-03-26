@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+
+{% block title %}Resource Map - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Resource Map</h1>
+            <p class="lead">View resources and requests on the map to find matches near you.</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{% url 'resource_list' %}" class="btn btn-outline-primary">
+                <i class="bi bi-list"></i> List View
+            </a>
+            {% if user.user_type == 'beneficiary' %}
+                <a href="{% url 'request_resource' %}" class="btn btn-primary ms-2">
+                    <i class="bi bi-plus-circle"></i> Request Resource
+                </a>
+            {% elif user.user_type == 'volunteer' %}
+                <a href="{% url 'offer_resource' %}" class="btn btn-primary ms-2">
+                    <i class="bi bi-plus-circle"></i> Offer Resource
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-9">
+            <div class="card shadow">
+                <div class="card-body p-0">
+                    <div id="resource-map" style="height: 700px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Filter Resources</h5>
+                </div>
+                <div class="card-body">
+                    <form id="map-filter-form">
+                        <div class="mb-3">
+                            <label class="form-label">Resource Type</label>
+                            <div class="overflow-auto" style="max-height: 150px;">
+                                {% for type in resource_types %}
+                                    <div class="form-check">
+                                        <input class="form-check-input filter-type" type="checkbox" value="{{ type.id }}" id="type-{{ type.id }}" checked>
+                                        <label class="form-check-label" for="type-{{ type.id }}">
+                                            {{ type.name }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <div class="form-check">
+                                <input class="form-check-input filter-status" type="checkbox" value="available" id="status-available" checked>
+                                <label class="form-check-label" for="status-available">
+                                    Available
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input filter-status" type="checkbox" value="requested" id="status-requested" checked>
+                                <label class="form-check-label" for="status-requested">
+                                    Requested
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input filter-status" type="checkbox" value="in_transit" id="status-in-transit" checked>
+                                <label class="form-check-label" for="status-in-transit">
+                                    In Transit
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="distance-range" class="form-label">Maximum Distance: <span id="distance-value">10</span> km</label>
+                            <input type="range" class="form-range" id="distance-range" min="1" max="50" value="10">
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="button" id="apply-filters" class="btn btn-primary">Apply Filters</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Legend</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="me-2" style="width: 20px; height: 20px; background-color: #198754; border-radius: 50%;"></div>
+                        <span>Available Resources</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="me-2" style="width: 20px; height: 20px; background-color: #ffc107; border-radius: 50%;"></div>
+                        <span>Requested Resources</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="me-2" style="width: 20px; height: 20px; background-color: #0dcaf0; border-radius: 50%;"></div>
+                        <span>In Transit Resources</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="me-2" style="width: 20px; height: 20px; background-color: #0d6efd; border-radius: 50%;"></div>
+                        <span>Your Location</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize map if the element exists
+        const resourceMap = document.getElementById('resource-map');
+        if (resourceMap && typeof L !== 'undefined') {
+            // Default location (center of map if no user location)
+            let userLat = 51.505;
+            let userLng = -0.09;
+            let zoom = 13;
+            
+            // Use user's location if available
+            {% if user.latitude and user.longitude %}
+                userLat = {{ user.latitude }};
+                userLng = {{ user.longitude }};
+                zoom = 13;
+            {% endif %}
+            
+            const map = L.map('resource-map').setView([userLat, userLng], zoom);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Add user marker if available
+            let userMarker;
+            {% if user.latitude and user.longitude %}
+                userMarker = L.marker([{{ user.latitude }}, {{ user.longitude }}], {
+                    icon: L.divIcon({
+                        className: 'user-marker',
+                        html: '<i class="bi bi-person-fill" style="font-size: 24px; color: #0d6efd;"></i>',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    })
+                }).addTo(map)
+                    .bindPopup('Your Location')
+                    .openPopup();
+            {% endif %}
+            
+            // Create layer groups for different resource statuses
+            const availableLayer = L.layerGroup().addTo(map);
+            const requestedLayer = L.layerGroup().addTo(map);
+            const inTransitLayer = L.layerGroup().addTo(map);
+            
+            // Function to create resource markers
+            function createResourceMarkers() {
+                // Clear existing layers
+                availableLayer.clearLayers();
+                requestedLayer.clearLayers();
+                inTransitLayer.clearLayers();
+                
+                // Get filter values
+                const selectedTypes = Array.from(document.querySelectorAll('.filter-type:checked')).map(cb => cb.value);
+                const selectedStatuses = Array.from(document.querySelectorAll('.filter-status:checked')).map(cb => cb.value);
+                const maxDistance = parseInt(document.getElementById('distance-range').value);
+                
+                // Add resource markers
+                {% for resource in resources %}
+                    {% if resource.latitude and resource.longitude %}
+                        // Check if resource matches filters
+                        const resourceType = "{{ resource.resource_type.id }}";
+                        const resourceStatus = "{{ resource.status }}";
+                        
+                        if (selectedTypes.includes(resourceType) && selectedStatuses.includes(resourceStatus)) {
+                            // Calculate distance if user location is available
+                            let distance = Infinity;
+                            {% if user.latitude and user.longitude %}
+                                distance = calculateDistance(
+                                    {{ user.latitude }}, {{ user.longitude }},
+                                    {{ resource.latitude }}, {{ resource.longitude }}
+                                );
+                            {% endif %}
+                            
+                            // Only show resources within the max distance
+                            if (distance <= maxDistance || !userMarker) {
+                                // Create marker with appropriate color based on status
+                                let markerColor = '#198754';  // Default green for available
+                                let targetLayer = availableLayer;
+                                
+                                if (resourceStatus === 'requested') {
+                                    markerColor = '#ffc107';  // Yellow for requested
+                                    targetLayer = requestedLayer;
+                                } else if (resourceStatus === 'in_transit') {
+                                    markerColor = '#0dcaf0';  // Blue for in transit
+                                    targetLayer = inTransitLayer;
+                                }
+                                
+                                const marker = L.circleMarker([{{ resource.latitude }}, {{ resource.longitude }}], {
+                                    radius: 8,
+                                    fillColor: markerColor,
+                                    color: '#fff',
+                                    weight: 1,
+                                    opacity: 1,
+                                    fillOpacity: 0.8
+                                });
+                                
+                                // Create popup content
+                                let popupContent = `
+                                    <div>
+                                        <h6>{{ resource.name }}</h6>
+                                        <p><strong>Type:</strong> {{ resource.resource_type.name }}</p>
+                                        <p><strong>Status:</strong> {{ resource.get_status_display }}</p>
+                                        <p><strong>Quantity:</strong> {{ resource.quantity }}</p>
+                                        {% if user.latitude and user.longitude %}
+                                            <p><strong>Distance:</strong> ${distance.toFixed(1)} km</p>
+                                        {% endif %}
+                                        <a href="{% url 'resource_detail' resource.id %}" class="btn btn-sm btn-primary">View Details</a>
+                                    </div>
+                                `;
+                                
+                                marker.bindPopup(popupContent);
+                                marker.addTo(targetLayer);
+                            }
+                        }
+                    {% endif %}
+                {% endfor %}
+            }
+            
+            // Initial creation of markers
+            createResourceMarkers();
+            
+            // Update markers when filters are applied
+            document.getElementById('apply-filters').addEventListener('click', function() {
+                createResourceMarkers();
+            });
+            
+            // Update distance value display when slider changes
+            const distanceRange = document.getElementById('distance-range');
+            const distanceValue = document.getElementById('distance-value');
+            
+            distanceRange.addEventListener('input', function() {
+                distanceValue.textContent = this.value;
+            });
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}
+

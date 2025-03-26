@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Make a Donation - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'campaign_list' %}">Campaigns</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'campaign_detail' campaign.id %}">{{ campaign.title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Make a Donation</li>
+        </ol>
+    </nav>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow form-card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Make a Donation</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Campaign: {{ campaign.title }}</h5>
+                        <p>Your donation will support {{ campaign.get_category_display }} in need.</p>
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ campaign.progress_percentage }}%" aria-valuenow="{{ campaign.progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>{{ campaign.current_amount }} raised of {{ campaign.goal_amount }}</span>
+                            <span>{{ campaign.progress_percentage }}%</span>
+                        </div>
+                    </div>
+                    
+                    <form method="post" id="donation-form">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <p>Please correct the errors below:</p>
+                                {{ form.errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Donation Amount</label>
+                            <div class="donation-amounts mb-3">
+                                <div class="row g-2">
+                                    <div class="col-6 col-md-3">
+                                        <div class="donation-amount-btn" data-amount="10">
+                                            <input type="radio" class="btn-check" name="amount-option" id="amount-10" autocomplete="off" {% if form.amount.value == 10 %}checked{% endif %}>
+                                            <label class="btn btn-outline-primary w-100" for="amount-10">$10</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="donation-amount-btn" data-amount="25">
+                                            <input type="radio" class="btn-check" name="amount-option" id="amount-25" autocomplete="off" {% if form.amount.value == 25 %}checked{% endif %}>
+                                            <label class="btn btn-outline-primary w-100" for="amount-25">$25</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="donation-amount-btn" data-amount="50">
+                                            <input type="radio" class="btn-check" name="amount-option" id="amount-50" autocomplete="off" {% if form.amount.value == 50 %}checked{% endif %}>
+                                            <label class="btn btn-outline-primary w-100" for="amount-50">$50</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="donation-amount-btn" data-amount="100">
+                                            <input type="radio" class="btn-check" name="amount-option" id="amount-100" autocomplete="off" {% if form.amount.value == 100 %}checked{% endif %}>
+                                            <label class="btn btn-outline-primary w-100" for="amount-100">$100</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_amount" class="form-label">Custom Amount</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" name="amount" id="id_amount" class="form-control" value="{{ form.amount.value|default:'' }}" min="1" step="0.01" required>
+                                </div>
+                                <div class="form-text">Enter the amount you wish to donate.</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_message" class="form-label">Message (Optional)</label>
+                            <textarea name="message" id="id_message" class="form-control" rows="3">{{ form.message.value|default:'' }}</textarea>
+                            <div class="form-text">Leave a message of support for the campaign.</div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" name="anonymous" id="id_anonymous" class="form-check-input" {% if form.anonymous.value %}checked{% endif %}>
+                            <label for="id_anonymous" class="form-check-label">Make my donation anonymous</label>
+                            <div class="form-text">If checked, your name will not be displayed publicly.</div>
+                        </div>
+                        
+                        <h5 class="border-bottom pb-2 mb-3">Payment Information</h5>
+                        
+                        <div class="mb-3">
+                            <label for="id_card_number" class="form-label">Card Number</label>
+                            <input type="text" name="card_number" id="id_card_number" class="form-control" placeholder="1234 5678 9012 3456" required>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="id_expiry_date" class="form-label">Expiry Date</label>
+                                <input type="text" name="expiry_date" id="id_expiry_date" class="form-control" placeholder="MM/YY" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_cvv" class="form-label">CVV</label>
+                                <input type="text" name="cvv" id="id_cvv" class="form-control" placeholder="123" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_name_on_card" class="form-label">Name on Card</label>
+                            <input type="text" name="name_on_card" id="id_name_on_card" class="form-control" required>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'campaign_detail' campaign.id %}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Complete Donation</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle donation amount buttons
+        const amountButtons = document.querySelectorAll('.donation-amount-btn');
+        const amountInput = document.getElementById('id_amount');
+        
+        amountButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const amount = this.dataset.amount;
+                amountInput.value = amount;
+            });
+        });
+        
+        // Format card number input
+        const cardNumberInput = document.getElementById('id_card_number');
+        cardNumberInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 16) {
+                value = value.slice(0, 16);
+            }
+            
+            // Add spaces every 4 digits
+            let formattedValue = '';
+            for (let i = 0; i < value.length; i++) {
+                if (i > 0 && i % 4 === 0) {
+                    formattedValue += ' ';
+                }
+                formattedValue += value[i];
+            }
+            
+            e.target.value = formattedValue;
+        });
+        
+        // Format expiry date input
+        const expiryDateInput = document.getElementById('id_expiry_date');
+        expiryDateInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 4) {
+                value = value.slice(0, 4);
+            }
+            
+            // Add slash after first 2 digits
+            if (value.length > 2) {
+                value = value.slice(0, 2) + '/' + value.slice(2);
+            }
+            
+            e.target.value = value;
+        });
+        
+        // Format CVV input
+        const cvvInput = document.getElementById('id_cvv');
+        cvvInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 3) {
+                value = value.slice(0, 3);
+            }
+            
+            e.target.value = value;
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}
+

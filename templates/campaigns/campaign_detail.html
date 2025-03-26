@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ campaign.title }} - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'campaign_list' %}">Campaigns</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ campaign.title }}</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <img src="{{ campaign.image.url|default:'/static/images/campaign-placeholder.jpg' }}" class="card-img-top" alt="{{ campaign.title }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="card-title">{{ campaign.title }}</h2>
+                        <span class="badge {% if campaign.status == 'active' %}bg-success{% elif campaign.status == 'pending' %}bg-warning{% elif campaign.status == 'completed' %}bg-primary{% elif campaign.status == 'cancelled' %}bg-danger{% endif %}">
+                            {{ campaign.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>{{ campaign.current_amount }} raised of {{ campaign.goal_amount }}</span>
+                            <span>{{ campaign.progress_percentage }}%</span>
+                        </div>
+                        <div class="progress mb-2" style="height: 10px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ campaign.progress_percentage }}%" aria-valuenow="{{ campaign.progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="bi bi-people"></i> {{ campaign.donors_count }} donors</span>
+                            <span><i class="bi bi-clock"></i> {{ campaign.days_left }} days left</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2">About this Campaign</h5>
+                        <p>{{ campaign.description }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2">Beneficiary Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Category:</strong> {{ campaign.get_category_display }}</p>
+                                <p><strong>Location:</strong> {{ campaign.location }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Created by:</strong> {{ campaign.created_by.get_full_name|default:campaign.created_by.username }}</p>
+                                <p><strong>Created on:</strong> {{ campaign.created_at|date:"F j, Y" }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if campaign.beneficiary %}
+                            <div class="mt-3">
+                                <h6>Beneficiary Details:</h6>
+                                <p>{{ campaign.beneficiary_description }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if campaign.updates.exists %}
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Campaign Updates</h5>
+                            {% for update in campaign.updates.all %}
+                                <div class="card mb-3">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">{{ update.title }}</h6>
+                                        <small class="text-muted">{{ update.created_at|date:"F j, Y" }}</small>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>{{ update.content }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'campaign_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Campaigns
+                        </a>
+                        
+                        <div>
+                            {% if user.is_authenticated %}
+                                {% if campaign.status == 'active' %}
+                                    <a href="{% url 'make_donation' campaign.id %}" class="btn btn-primary">
+                                        <i class="bi bi-heart"></i> Donate Now
+                                    </a>
+                                {% endif %}
+                                
+                                {% if user == campaign.created_by %}
+                                    <a href="{% url 'edit_campaign' campaign.id %}" class="btn btn-outline-primary ms-2">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                    
+                                    {% if campaign.status == 'active' %}
+                                        <a href="{% url 'add_campaign_update' campaign.id %}" class="btn btn-outline-info ms-2">
+                                            <i class="bi bi-plus-circle"></i> Add Update
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                            {% else %}
+                                <a href="{% url 'login' %}?next={% url 'campaign_detail' campaign.id %}" class="btn btn-primary">
+                                    <i class="bi bi-heart"></i> Login to Donate
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Recent Donors</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_donations %}
+                        <ul class="list-group list-group-flush">
+                            {% for donation in recent_donations %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0">{{ donation.donor.get_full_name|default:donation.donor.username }}</h6>
+                                        <small class="text-muted">{{ donation.created_at|date:"F j, Y" }}</small>
+                                    </div>
+                                    <span class="badge bg-success rounded-pill">{{ donation.amount }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-center py-3">Be the first to donate to this campaign!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Donate to this Campaign</h5>
+                </div>
+                <div class="card-body">
+                    {% if campaign.status == 'active' %}
+                        <p>Your donation will help support {{ campaign.get_category_display }} in need.</p>
+                        
+                        <div class="donation-amounts mb-3">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="donation-amount-btn" data-amount="10">
+                                        <input type="radio" class="btn-check" name="donation-amount" id="amount-10" autocomplete="off">
+                                        <label class="btn btn-outline-primary w-100" for="amount-10">$10</label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="donation-amount-btn" data-amount="25">
+                                        <input type="radio" class="btn-check" name="donation-amount" id="amount-25" autocomplete="off">
+                                        <label class="btn btn-outline-primary w-100" for="amount-25">$25</label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="donation-amount-btn" data-amount="50">
+                                        <input type="radio" class="btn-check" name="donation-amount" id="amount-50" autocomplete="off">
+                                        <label class="btn btn-outline-primary w-100" for="amount-50">$50</label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="donation-amount-btn" data-amount="100">
+                                        <input type="radio" class="btn-check" name="donation-amount" id="amount-100" autocomplete="off">
+                                        <label class="btn btn-outline-primary w-100" for="amount-100">$100</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="custom-amount" class="form-label">Custom Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="custom-amount" placeholder="Enter amount">
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <a href="{% url 'make_donation' campaign.id %}" class="btn btn-primary">
+                                <i class="bi bi-heart"></i> Donate Now
+                            </a>
+                        </div>
+                    {% elif campaign.status == 'completed' %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-check-circle-fill text-success display-4"></i>
+                            <p class="lead mt-3">This campaign has reached its goal!</p>
+                            <p>Thank you to all donors who contributed.</p>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-exclamation-circle-fill text-warning display-4"></i>
+                            <p class="lead mt-3">This campaign is not currently accepting donations.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Share this Campaign</h5>
+                </div>
+                <div class="card-body">
+                    <p>Help spread the word about this campaign!</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" class="btn btn-outline-primary">
+                            <i class="bi bi-facebook"></i>
+                        </a>
+                        <a href="https://twitter.com/intent/tweet?text=Support this campaign: {{ campaign.title }}&url={{ request.build_absolute_uri }}" target="_blank" class="btn btn-outline-primary">
+                            <i class="bi bi-twitter"></i>
+                        </a>
+                        <a href="https://wa.me/?text=Support this campaign: {{ campaign.title }} {{ request.build_absolute_uri }}" target="_blank" class="btn btn-outline-primary">
+                            <i class="bi bi-whatsapp"></i>
+                        </a>
+                        <a href="mailto:?subject=Support this campaign: {{ campaign.title }}&body=Check out this campaign: {{ request.build_absolute_uri }}" class="btn btn-outline-primary">
+                            <i class="bi bi-envelope"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Similar Campaigns</h5>
+                </div>
+                <div class="card-body">
+                    {% if similar_campaigns %}
+                        <div class="list-group">
+                            {% for similar in similar_campaigns %}
+                                <a href="{% url 'campaign_detail' similar.id %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ similar.title }}</h6>
+                                        <small>{{ similar.days_left }} days left</small>
+                                    </div>
+                                    <div class="progress mb-2" style="height: 5px;">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ similar.progress_percentage }}%" aria-valuenow="{{ similar.progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <small>{{ similar.current_amount }} of {{ similar.goal_amount }}</small>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center py-3">No similar campaigns found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

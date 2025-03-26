@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Donation Successful - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-check-circle-fill text-success display-1 mb-4"></i>
+                    <h2 class="mb-3">Thank You for Your Donation!</h2>
+                    <p class="lead mb-4">Your donation of <strong>{{ donation.amount }}</strong> to <strong>{{ donation.campaign.title }}</strong> has been successfully processed.</p>
+                    
+                    <div class="alert alert-info mb-4">
+                        <p class="mb-0">A receipt has been sent to your email address.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>Your Impact</h5>
+                        <p>Your generosity helps support {{ donation.campaign.get_category_display }} in need. Thank you for making a difference!</p>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="{% url 'campaign_detail' donation.campaign.id %}" class="btn btn-outline-primary me-md-2">
+                            <i class="bi bi-arrow-left"></i> Back to Campaign
+                        </a>
+                        <a href="{% url 'campaign_list' %}" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Explore More Campaigns
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow mt-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Share Your Support</h5>
+                </div>
+                <div class="card-body text-center">
+                    <p>Spread the word and encourage others to support this cause!</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" class="btn btn-outline-primary">
+                            <i class="bi bi-facebook"></i> Share
+                        </a>
+                        <a href="https://twitter.com/intent/tweet?text=I just donated to support {{ donation.campaign.title }}. Join me in making a difference!&url={{ request.build_absolute_uri|urlencode }}" target="_blank" class="btn btn-outline-primary">
+                            <i class="bi bi-twitter"></i> Tweet
+                        </a>
+                        <a href="https://wa.me/?text=I just donated to support {{ donation.campaign.title }}. Join me in making a difference! {{ request.build_absolute_uri|urlencode }}" target="_blank" class="btn btn-outline-primary">
+                            <i class="bi bi-whatsapp"></i> Share
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ resource.name }} - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'resource_list' %}">Resources</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ resource.name }}</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header {% if resource.status == 'available' %}bg-success{% elif resource.status == 'requested' %}bg-warning{% elif resource.status == 'in_transit' %}bg-info{% elif resource.status == 'delivered' %}bg-primary{% elif resource.status == 'cancelled' %}bg-danger{% endif %} text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">{{ resource.name }}</h4>
+                        <span class="badge bg-light text-dark">{{ resource.resource_type.name }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2">Description</h5>
+                        <p>{{ resource.description }}</p>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="border-bottom pb-2">Details</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Status:</strong> 
+                                    <span class="badge {% if resource.status == 'available' %}bg-success{% elif resource.status == 'requested' %}bg-warning{% elif resource.status == 'in_transit' %}bg-info{% elif resource.status == 'delivered' %}bg-primary{% elif resource.status == 'cancelled' %}bg-danger{% endif %}">
+                                        {{ resource.get_status_display }}
+                                    </span>
+                                </li>
+                                <li><strong>Quantity:</strong> {{ resource.quantity }}</li>
+                                <li><strong>Date Added:</strong> {{ resource.created_at|date:"F j, Y" }}</li>
+                                <li><strong>Last Updated:</strong> {{ resource.updated_at|date:"F j, Y" }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="border-bottom pb-2">Contact</h5>
+                            {% if resource.offered_by %}
+                                <p><strong>Offered by:</strong> {{ resource.offered_by.user.get_full_name|default:resource.offered_by.user.username }}</p>
+                                {% if user.is_staff or resource.requested_by.user == user %}
+                                    <p><strong>Phone:</strong> {{ resource.offered_by.user.phone_number|default:"Not provided" }}</p>
+                                    <p><strong>Email:</strong> {{ resource.offered_by.user.email|default:"Not provided" }}</p>
+                                {% endif %}
+                            {% elif resource.requested_by %}
+                                <p><strong>Requested by:</strong> {{ resource.requested_by.user.get_full_name|default:resource.requested_by.user.username }}</p>
+                                {% if user.is_staff or resource.offered_by.user == user %}
+                                    <p><strong>Phone:</strong> {{ resource.requested_by.user.phone_number|default:"Not provided" }}</p>
+                                    <p><strong>Email:</strong> {{ resource.requested_by.user.email|default:"Not provided" }}</p>
+                                {% endif %}
+                            {% else %}
+                                <p>No contact information available.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if resource.latitude and resource.longitude %}
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Location</h5>
+                            <div id="resource-map" style="height: 300px;" class="rounded border"></div>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'resource_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Resources
+                        </a>
+                        
+                        <div>
+                            {% if user.user_type == 'beneficiary' and resource.requested_by.user == user and resource.status == 'requested' %}
+                                <a href="{% url 'edit_resource' resource.id %}" class="btn btn-outline-primary me-2">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <form method="post" action="{% url 'cancel_resource' resource.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to cancel this request?')">
+                                        <i class="bi bi-x-circle"></i> Cancel Request
+                                    </button>
+                                </form>
+                            {% elif user.user_type == 'volunteer' and resource.offered_by.user == user and resource.status == 'available' %}
+                                <a href="{% url 'edit_resource' resource.id %}" class="btn btn-outline-primary me-2">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <form method="post" action="{% url 'cancel_resource' resource.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to cancel this offer?')">
+                                        <i class="bi bi-x-circle"></i> Cancel Offer
+                                    </button>
+                                </form>
+                            {% elif user.user_type == 'volunteer' and resource.status == 'requested' %}
+                                <form method="post" action="{% url 'volunteer_match' resource.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you want to volunteer for this request?')">
+                                        <i class="bi bi-hand-thumbs-up"></i> Volunteer for This Request
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if match %}
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Match Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6>Match Status</h6>
+                                <span class="badge {% if match.status == 'pending' %}bg-warning{% elif match.status == 'accepted' %}bg-info{% elif match.status == 'in_progress' %}bg-primary{% elif match.status == 'completed' %}bg-success{% elif match.status == 'cancelled' %}bg-danger{% endif %} fs-6">
+                                    {{ match.get_status_display }}
+                                </span>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Match Date</h6>
+                                <p>{{ match.created_at|date:"F j, Y" }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6>Beneficiary</h6>
+                                <p>{{ match.beneficiary.user.get_full_name|default:match.beneficiary.user.username }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Volunteer</h6>
+                                <p>{{ match.volunteer.user.get_full_name|default:match.volunteer.user.username }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if match.notes %}
+                            <div class="mb-3">
+                                <h6>Notes</h6>
+                                <p>{{ match.notes }}</p>
+                            </div>
+                        {% endif %}
+                        
+                        {% if match.estimated_arrival %}
+                            <div class="mb-3">
+                                <h6>Estimated Arrival</h6>
+                                <p>{{ match.estimated_arrival|date:"F j, Y, g:i a" }}</p>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-end mt-3">
+                            <a href="{% url 'match_detail' match.id %}" class="btn btn-primary">
+                                <i class="bi bi-eye"></i> View Match Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Resource Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <div class="display-1 mb-2">
+                            {% if resource.status == 'available' %}
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            {% elif resource.status == 'requested' %}
+                                <i class="bi bi-hourglass-split text-warning"></i>
+                            {% elif resource.status == 'in_transit' %}
+                                <i class="bi bi-truck text-info"></i>
+                            {% elif resource.status == 'delivered' %}
+                                <i class="bi bi-box-seam-fill text-primary"></i>
+                            {% elif resource.status == 'cancelled' %}
+                                <i class="bi bi-x-circle-fill text-danger"></i>
+                            {% endif %}
+                        </div>
+                        <h4>{{ resource.get_status_display }}</h4>
+                    </div>
+                    
+                    <div class="progress mb-3">
+                        {% if resource.status == 'available' %}
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+                        {% elif resource.status == 'requested' %}
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 25%"></div>
+                        {% elif resource.status == 'in_transit' %}
+                            <div class="progress-bar bg-info" role="progressbar" style="width: 50%"></div>
+                        {% elif resource.status == 'delivered' %}
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: 100%"></div>
+                        {% elif resource.status == 'cancelled' %}
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 100%"></div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-center">
+                        <p class="text-muted">Last updated: {{ resource.updated_at|date:"F j, Y, g:i a" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            {% if user.latitude and user.longitude and resource.latitude and resource.longitude %}
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Distance</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="display-4 mb-2" id="distance-value">
+                            Calculating...
+                        </div>
+                        <p class="text-muted">Distance from your location</p>
+                    </div>
+                </div>
+                
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const distance = calculateDistance(
+                            {{ user.latitude }}, {{ user.longitude }},
+                            {{ resource.latitude }}, {{ resource.longitude }}
+                        );
+                        document.getElementById('distance-value').textContent = 
+                            distance.toFixed(1) + ' km';
+                    });
+                </script>
+            {% endif %}
+            
+            {% if similar_resources %}
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Similar Resources</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for similar in similar_resources %}
+                                <a href="{% url 'resource_detail' similar.id %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ similar.name }}</h6>
+                                        <small class="text-muted">{{ similar.get_status_display }}</small>
+                                    </div>
+                                    <p class="mb-1">{{ similar.description|truncatechars:50 }}</p>
+                                    <small>{{ similar.resource_type.name }}</small>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize map if the element exists
+        const resourceMap = document.getElementById('resource-map');
+        if (resourceMap && typeof L !== 'undefined') {
+            const map = L.map('resource-map').setView([51.505, -0.09], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Add resource marker
+            {% if resource.latitude and resource.longitude %}
+                map.setView([{{ resource.latitude }}, {{ resource.longitude }}], 13);
+                L.marker([{{ resource.latitude }}, {{ resource.longitude }}])
+                    .addTo(map)
+                    .bindPopup('{{ resource.name }}')
+                    .openPopup();
+            {% endif %}
+            
+            // Add user marker if available
+            {% if user.latitude and user.longitude %}
+                L.marker([{{ user.latitude }}, {{ user.longitude }}], {
+                    icon: L.divIcon({
+                        className: 'user-marker',
+                        html: '<i class="bi bi-person-fill" style="font-size: 24px; color: #0d6efd;"></i>',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    })
+                }).addTo(map)
+                    .bindPopup('Your Location')
+                    .openPopup();
+                
+                // Draw line between user and resource
+                const latlngs = [
+                    [{{ user.latitude }}, {{ user.longitude }}],
+                    [{{ resource.latitude }}, {{ resource.longitude }}]
+                ];
+                L.polyline(latlngs, {color: '#0d6efd'}).addTo(map);
+                
+                // Fit bounds to show both markers
+                map.fitBounds(latlngs, {padding: [50, 50]});
+            {% endif %}
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}
+

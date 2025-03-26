@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}Volunteer Dashboard - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Welcome, {{ user.first_name|default:user.username }}</h1>
+        <a href="{% url 'offer_resource' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Offer Resource
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">My Offered Resources</h5>
+                </div>
+                <div class="card-body">
+                    {% if offered_resources %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Resource</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Date Offered</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for resource in offered_resources %}
+                                        <tr>
+                                            <td>{{ resource.name }}</td>
+                                            <td>{{ resource.resource_type.name }}</td>
+                                            <td>
+                                                <span class="badge {% if resource.status == 'available' %}bg-success{% elif resource.status == 'in_transit' %}bg-info{% elif resource.status == 'delivered' %}bg-primary{% elif resource.status == 'cancelled' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                                    {{ resource.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ resource.created_at|date:"M d, Y" }}</td>
+                                            <td>
+                                                <a href="{% url 'resource_detail' resource.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye"></i> View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-inbox display-1 text-muted"></i>
+                            <p class="lead mt-3">You haven't offered any resources yet.</p>
+                            <a href="{% url 'offer_resource' %}" class="btn btn-primary mt-2">Offer a Resource</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">My Matches</h5>
+                </div>
+                <div class="card-body">
+                    {% if matches %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Resource</th>
+                                        <th>Beneficiary</th>
+                                        <th>Status</th>
+                                        <th>Date Matched</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for match in matches %}
+                                        <tr>
+                                            <td>{{ match.resource.name }}</td>
+                                            <td>{{ match.beneficiary.user.get_full_name|default:match.beneficiary.user.username }}</td>
+                                            <td>
+                                                <span class="badge {% if match.status == 'pending' %}bg-warning{% elif match.status == 'accepted' %}bg-info{% elif match.status == 'in_progress' %}bg-primary{% elif match.status == 'completed' %}bg-success{% elif match.status == 'cancelled' %}bg-danger{% endif %}">
+                                                    {{ match.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ match.created_at|date:"M d, Y" }}</td>
+                                            <td>
+                                                <a href="{% url 'match_detail' match.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye"></i> View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-people display-1 text-muted"></i>
+                            <p class="lead mt-3">You don't have any matches yet.</p>
+                            <p>You can volunteer for resource requests to create matches.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Profile Summary</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="avatar-circle bg-primary text-white mb-3">
+                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                    </div>
+                    <h4>{{ user.get_full_name|default:user.username }}</h4>
+                    <p class="text-muted">Volunteer</p>
+                    
+                    <div class="d-grid gap-2 mt-3">
+                        <a href="{% url 'profile' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil-square"></i> Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <h3 class="text-primary">{{ offered_resources.count }}</h3>
+                            <p class="text-muted mb-0">Resources Offered</p>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h3 class="text-primary">{{ matches.count }}</h3>
+                            <p class="text-muted mb-0">Total Matches</p>
+                        </div>
+                        <div class="col-6">
+                            <h3 class="text-success">{{ matches.filter.count }}</h3>
+                            <p class="text-muted mb-0">Completed</p>
+                        </div>
+                        <div class="col-6">
+                            <h3 class="text-warning">{{ matches.filter.count }}</h3>
+                            <p class="text-muted mb-0">In Progress</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Nearby Requests</h5>
+                </div>
+                <div class="card-body">
+                    <div id="mini-map" style="height: 200px;" class="mb-3 rounded border"></div>
+                    <div class="d-grid">
+                        <a href="{% url 'resource_map' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-map"></i> View Full Map
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize mini map if the element exists
+        const miniMap = document.getElementById('mini-map');
+        if (miniMap && typeof L !== 'undefined') {
+            const map = L.map('mini-map').setView([51.505, -0.09], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // If user has location, center map there
+            {% if user.latitude and user.longitude %}
+                map.setView([{{ user.latitude }}, {{ user.longitude }}], 13);
+                L.marker([{{ user.latitude }}, {{ user.longitude }}])
+                    .addTo(map)
+                    .bindPopup('Your Location')
+                    .openPopup();
+            {% endif %}
+            
+            // Add nearby resource requests to map
+            {% for resource in nearby_requests %}
+                {% if resource.latitude and resource.longitude %}
+                    L.marker([{{ resource.latitude }}, {{ resource.longitude }}])
+                        .addTo(map)
+                        .bindPopup('{{ resource.name }}');
+                {% endif %}
+            {% endfor %}
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}
+

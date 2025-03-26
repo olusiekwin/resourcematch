@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Give Feedback - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'match_list' %}">Matches</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'match_detail' match.id %}">Match Details</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Give Feedback</li>
+        </ol>
+    </nav>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow form-card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Give Feedback</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Match: {{ match.resource.name }}</h5>
+                        <p>
+                            {% if user.user_type == 'beneficiary' %}
+                                Please provide feedback on your experience with the volunteer 
+                                <strong>{{ match.volunteer.user.get_full_name|default:match.volunteer.user.username }}</strong>.
+                            {% else %}
+                                Please provide feedback on your experience with the beneficiary 
+                                <strong>{{ match.beneficiary.user.get_full_name|default:match.beneficiary.user.username }}</strong>.
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <p>Please correct the errors below:</p>
+                                {{ form.errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Rating</label>
+                            <div class="rating-container d-flex justify-content-center mb-3">
+                                <div class="btn-group" role="group" aria-label="Rating">
+                                    {% for value, text in form.fields.rating.choices %}
+                                        <input type="radio" class="btn-check" name="rating" id="rating{{ value }}" value="{{ value }}" {% if form.rating.value == value %}checked{% endif %} required>
+                                        <label class="btn btn-outline-warning" for="rating{{ value }}">
+                                            {{ value }} <i class="bi bi-star-fill"></i>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="id_comment" class="form-label">Comments</label>
+                            <textarea name="comment" id="id_comment" class="form-control" rows="5">{{ form.comment.value|default:'' }}</textarea>
+                            <div class="form-text">Please share your experience and any suggestions for improvement.</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'match_detail' match.id %}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

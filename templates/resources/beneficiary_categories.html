@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block title %}Beneficiary Categories - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">Beneficiary Categories</h1>
+    
+    <div class="row mb-5">
+        <div class="col-md-6">
+            <p class="lead">Resource Match supports various vulnerable groups in our community. Learn more about each category and how you can help.</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            {% if user.is_authenticated %}
+                {% if user.user_type == 'beneficiary' %}
+                    <a href="{% url 'request_resource' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Request Resource
+                    </a>
+                {% elif user.user_type == 'volunteer' %}
+                    <a href="{% url 'offer_resource' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Offer Resource
+                    </a>
+                {% elif user.user_type == 'donor' %}
+                    <a href="{% url 'campaign_list' %}" class="btn btn-primary">
+                        <i class="bi bi-heart"></i> Donate Now
+                    </a>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'register' %}" class="btn btn-primary">
+                    <i class="bi bi-person-plus"></i> Register to Help
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">People with Disabilities (PWDs)</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <img src="/static/images/pwd-support.jpg" class="img-fluid rounded mb-3" alt="People with Disabilities Support">
+                </div>
+                <div class="col-md-8">
+                    <h5>Our Primary Focus</h5>
+                    <p>People with disabilities face unique challenges in accessing resources and services. Resource Match prioritizes support for individuals with physical, cognitive, sensory, and developmental disabilities.</p>
+                    
+                    <h5>How We Help</h5>
+                    <ul>
+                        <li>Mobility aids and assistive devices</li>
+                        <li>Accessible transportation services</li>
+                        <li>Home modification assistance</li>
+                        <li>Educational resources and learning aids</li>
+                        <li>Employment support and skills training</li>
+                    </ul>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                        <a href="{% url 'resource_list' %}?category=pwd" class="btn btn-outline-primary">
+                            <i class="bi bi-search"></i> Browse PWD Resources
+                        </a>
+                        <a href="{% url 'campaign_list' %}?category=pwd" class="btn btn-primary">
+                            <i class="bi bi-heart"></i> Support PWD Campaigns
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Women with Medical Conditions</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <h5>Supporting Women's Health</h5>
+                    <p>Resource Match provides support for women dealing with various medical conditions, including fistula, endometriosis, and cancer. These conditions often require specialized care and resources.</p>
+                    
+                    <h5>Specific Support Areas</h5>
+                    <ul>
+                        <li>Medical treatment assistance and funding</li>
+                        <li>Post-surgery recovery support</li>
+                        <li>Specialized medical supplies</li>
+                        <li>Transportation to medical appointments</li>
+                        <li>Support groups and counseling services</li>
+                        <li>Childcare assistance during treatment</li>
+                    </ul>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                        <a href="{% url 'resource_list' %}?category=medical" class="btn btn-outline-primary">
+                            <i class="bi bi-search"></i> Browse Medical Resources
+                        </a>
+                        <a href="{% url 'campaign_list' %}?category=medical" class="btn btn-primary">
+                            <i class="bi bi-heart"></i> Support Medical Campaigns
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <img src="/static/images/women-health.jpg" class="img-fluid rounded mb-3" alt="Women's Health Support">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Widows</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <img src="/static/images/widow-support.jpg" class="img-fluid rounded mb-3" alt="Widow Support">
+                </div>
+                <div class="col-md-8">
+                    <h5>Supporting Widows in Transition</h5>
+                    <p>Widows often face significant emotional, financial, and social challenges after losing their spouse. Resource Match provides comprehensive support to help widows rebuild their lives.</p>
+                    
+                    <h5>How We Help</h5>
+                    <ul>
+                        <li>Financial assistance and emergency funds</li>
+                        <li>Housing support and resources</li>
+                        <li>Legal aid for estate matters</li>
+                        <li>Employment opportunities and job training</li>
+                        <li>Childcare assistance and family support</li>
+                        <li>Grief counseling and emotional support</li>
+                    </ul>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                        <a href="{% url 'resource_list' %}?category=widows" class="btn btn-outline-primary">
+                            <i class="bi bi-search"></i> Browse Widow Support Resources
+                        </a>
+                        <a href="{% url 'campaign_list' %}?category=widows" class="btn btn-primary">
+                            <i class="bi bi-heart"></i> Support Widow Campaigns
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Elderly Citizens</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <h5>Supporting Our Seniors</h5>
+                    <p>Elderly citizens often face challenges related to health, mobility, isolation, and financial security. Resource Match is committed to helping seniors maintain their dignity, independence, and quality of life.</p>
+                    
+                    <h5>How We Help</h5>
+                    <ul>
+                        <li>Home care assistance and daily living support</li>
+                        <li>Meal delivery and nutritional support</li>
+                        <li>Transportation services for appointments</li>
+                        <li>Medication management assistance</li>
+                        <li>Home safety modifications</li>
+                        <li>Social activities and companionship</li>
+                    </ul>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                        <a href="{% url 'resource_list' %}?category=elderly" class="btn btn-outline-primary">
+                            <i class="bi bi-search"></i> Browse Elderly Support Resources
+                        </a>
+                        <a href="{% url 'campaign_list' %}?category=elderly" class="btn btn-primary">
+                            <i class="bi bi-heart"></i> Support Elderly Campaigns
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <img src="/static/images/elderly-support.jpg" class="img-fluid rounded mb-3" alt="Elderly Support">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-center py-4">
+        <h3>Ready to Make a Difference?</h3>
+        <p class="lead">Join our community of volunteers, donors, and beneficiaries working together to create positive change.</p>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-3">
+            {% if not user.is_authenticated %}
+                <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-person-plus"></i> Register Now
+                </a>
+                <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-box-arrow-in-right"></i> Login
+                </a>
+            {% else %}
+                <a href="{% url 'resource_list' %}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-search"></i> Browse Resources
+                </a>
+                <a href="{% url 'campaign_list' %}" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-heart"></i> View Campaigns
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Give Feedback - Resource Match{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Give Feedback</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5>Resource: {{ match.resource.name }}</h5>
+                    <p class="text-muted">Delivered on {{ match.completed_at|date:"F j, Y" }}</p>
+                </div>
+                
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Rate your experience with 
+                            {% if user.user_type == 'beneficiary' %}
+                                {{ match.volunteer.user.first_name }} {{ match.volunteer.user.last_name }}
+                            {% else %}
+                                {{ match.beneficiary.user.first_name }} {{ match.beneficiary.user.last_name }}
+                            {% endif %}
+                        </label>
+                        
+                        <div class="rating-stars mb-3">
+                            <div class="d-flex justify-content-between">
+                                {% for i in "12345" %}
+                                    <div class="form-check">
+                                        <input class="form-check-input visually-hidden" type="radio" name="rating" id="rating{{ i }}" value="{{ i }}" {% if form.rating.value == i %}checked{% endif %} required>
+                                        <label class="form-check-label rating-label" for="rating{{ i }}">
+                                            <i class="bi bi-star-fill fs-2"></i>
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="d-flex justify-content-between text-muted small">
+                                <span>Poor</span>
+                                <span>Excellent</span>
+                            </div>
+                        </div>
+                        
+                        {% if form.rating.errors %}
+                            <div class="text-danger">{{ form.rating.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.comment.id_for_label }}" class="form-label">Comments</label>
+                        <textarea name="{{ form.comment.name }}" id="{{ form.comment.id_for_label }}" 
+                                  class="form-control {% if form.comment.errors %}is-invalid{% endif %}" 
+                                  rows="4" placeholder="Share your experience">{{ form.comment.value|default:'' }}</textarea>
+                        {% if form.comment.errors %}
+                            <div class="invalid-feedback">{{ form.comment.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">Submit Feedback</button>
+                        <a href="{% url 'match_detail' match.id %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle star rating
+    const ratingLabels = document.querySelectorAll('.rating-label');
+    const ratingInputs = document.querySelectorAll('input[name="rating"]');
+    
+    // Function to update stars
+    function updateStars(selectedRating) {
+        ratingLabels.forEach((label, index) => {
+            const star = label.querySelector('i');
+            if (index < selectedRating) {
+                star.classList.add('text-warning');
+            } else {
+                star.classList.remove('text-warning');
+            }
+        });
+    }
+    
+    // Initialize stars based on selected rating
+    ratingInputs.forEach(input => {
+        if (input.checked) {
+            updateStars(parseInt(input.value));
+        }
+        
+        input.addEventListener('change', function() {
+            updateStars(parseInt(this.value));
+        });
+    });
+    
+    // Handle hover effect
+    ratingLabels.forEach((label, index) => {
+        label.addEventListener('mouseenter', function() {
+            updateStars(index + 1);
+        });
+        
+        label.addEventListener('mouseleave', function() {
+            const selectedRating = document.querySelector('input[name="rating"]:checked');
+            if (selectedRating) {
+                updateStars(parseInt(selectedRating.value));
+            } else {
+                updateStars(0);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+
