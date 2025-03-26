@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}SMS Notification Preferences - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="display-5 fw-bold mb-4 text-center">SMS Notification Preferences</h1>
+            <p class="lead text-center mb-5">Customize how and when you receive SMS notifications from Resource Match.</p>
+            
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <h3 class="h5 mb-3">Notification Settings</h3>
+                            <p class="text-muted mb-4">Choose which types of notifications you'd like to receive via SMS. Standard message and data rates may apply.</p>
+                            
+                            <div class="form-check mb-3">
+                                {{ form.receive_match_notifications }}
+                                <label class="form-check-label" for="{{ form.receive_match_notifications.id_for_label }}">
+                                    Match Notifications
+                                    <small class="d-block text-muted">Receive SMS when you're matched with a resource or volunteer</small>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                {{ form.receive_resource_updates }}
+                                <label class="form-check-label" for="{{ form.receive_resource_updates.id_for_label }}">
+                                    Resource Updates
+                                    <small class="d-block text-muted">Receive SMS when there are updates to your requested or offered resources</small>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                {{ form.receive_campaign_updates }}
+                                <label class="form-check-label" for="{{ form.receive_campaign_updates.id_for_label }}">
+                                    Campaign Updates
+                                    <small class="d-block text-muted">Receive SMS about campaign progress and milestones</small>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                {{ form.receive_feedback_notifications }}
+                                <label class="form-check-label" for="{{ form.receive_feedback_notifications.id_for_label }}">
+                                    Feedback Notifications
+                                    <small class="d-block text-muted">Receive SMS when you receive feedback or reminders to give feedback</small>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                {{ form.receive_general_notifications }}
+                                <label class="form-check-label" for="{{ form.receive_general_notifications.id_for_label }}">
+                                    General Notifications
+                                    <small class="d-block text-muted">Receive SMS about platform updates, events, and other general information</small>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <p class="mb-0"><i class="bi bi-info-circle me-2"></i> Your phone number will only be used for the notifications you select. You can opt out at any time by replying STOP to any message or updating your preferences here.</p>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'profile' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Preferences</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mt-4">
+                <div class="card-body p-4">
+                    <h3 class="h5 mb-3">SMS History</h3>
+                    <p class="text-muted mb-4">Recent SMS messages sent to your phone number.</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Message</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in sms_logs %}
+                                <tr>
+                                    <td>{{ log.sent_at|date:"M d, Y" }}</td>
+                                    <td>{{ log.message|truncatechars:50 }}</td>
+                                    <td>
+                                        {% if log.status == 'sent' %}
+                                        <span class="badge bg-success">Sent</span>
+                                        {% elif log.status == 'delivered' %}
+                                        <span class="badge bg-primary">Delivered</span>
+                                        {% elif log.status == 'failed' %}
+                                        <span class="badge bg-danger">Failed</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ log.status|title }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-4">No SMS messages have been sent yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

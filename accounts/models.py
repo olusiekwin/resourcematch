@@ -59,6 +59,30 @@ class UserProfile(models.Model):
             return 'other'
 
 
+class Beneficiary(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='beneficiary_profile')
+    needs_description = models.TextField(blank=True, null=True)
+    emergency_contact_name = models.CharField(max_length=100, blank=True, null=True)
+    emergency_contact_phone = models.CharField(max_length=20, blank=True, null=True)
+    mobility_limitations = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"Beneficiary: {self.user.username}"
+
+
+class Volunteer(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='volunteer_profile')
+    bio = models.TextField(blank=True, null=True)
+    availability = models.TextField(blank=True, null=True)
+    transportation_type = models.CharField(max_length=50, blank=True, null=True)
+    verified = models.BooleanField(default=False)
+    active = models.BooleanField(default=True)
+    max_distance_km = models.IntegerField(default=10)
+    
+    def __str__(self):
+        return f"Volunteer: {self.user.username}"
+
+
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
@@ -69,4 +93,12 @@ def create_user_profile(sender, instance, created, **kwargs):
 def save_user_profile(sender, instance, **kwargs):
     if hasattr(instance, 'userprofile'):
         instance.userprofile.save()
+
+
+@receiver(post_save, sender=UserProfile)
+def create_specific_profile(sender, instance, created, **kwargs):
+    if instance.user_type == 'beneficiary' and not hasattr(instance.user, 'beneficiary_profile'):
+        Beneficiary.objects.create(user=instance.user)
+    elif instance.user_type == 'volunteer' and not hasattr(instance.user, 'volunteer_profile'):
+        Volunteer.objects.create(user=instance.user)
 

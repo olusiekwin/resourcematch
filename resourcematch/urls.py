@@ -13,6 +13,7 @@ urlpatterns = [
     path('', include('feedback.urls')),
     path('', include('notifications.urls')),
     path('', include('campaigns.urls')),
+    path('', include('sms_integration.urls')),
     
     # API URLs
     path('api/', include('resourcematch.api_urls')),
@@ -22,6 +23,10 @@ urlpatterns = [
     path('contact/', TemplateView.as_view(template_name='contact.html'), name='contact'),
     path('privacy/', TemplateView.as_view(template_name='privacy.html'), name='privacy'),
     path('terms/', TemplateView.as_view(template_name='terms.html'), name='terms'),
+    path('faq/', TemplateView.as_view(template_name='faq.html'), name='faq'),
+    path('how-it-works/', TemplateView.as_view(template_name='how_it_works.html'), name='how_it_works'),
+    path('impact/', TemplateView.as_view(template_name='impact.html'), name='impact'),
+    path('partners/', TemplateView.as_view(template_name='partners.html'), name='partners'),
 ]
 
 # Serve static and media files in development

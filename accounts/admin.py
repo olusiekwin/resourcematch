@@ -1,6 +1,12 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Beneficiary, Volunteer
+from django.contrib.auth.models import User
+from .models import UserProfile, Beneficiary, Volunteer
+
+class UserProfileInline(admin.StackedInline):
+    model = UserProfile
+    can_delete = False
+    verbose_name_plural = 'user profile'
 
 class BeneficiaryInline(admin.StackedInline):
     model = Beneficiary
@@ -13,22 +19,35 @@ class VolunteerInline(admin.StackedInline):
     verbose_name_plural = 'volunteer'
 
 class UserAdmin(BaseUserAdmin):
-    inlines = []
-    list_display = ('username', 'email', 'first_name', 'last_name', 'user_type', 'is_staff')
-    list_filter = ('user_type', 'is_staff', 'is_superuser', 'is_active')
-    fieldsets = BaseUserAdmin.fieldsets + (
-        ('Additional Info', {'fields': ('user_type', 'phone_number', 'address', 'latitude', 'longitude')}),
-    )
+    inlines = [UserProfileInline]
+    list_display = ('username', 'email', 'first_name', 'last_name', 'get_user_type', 'is_staff')
+    list_filter = ('userprofile__user_type', 'is_staff', 'is_superuser', 'is_active')
+    
+    def get_user_type(self, obj):
+        return obj.userprofile.get_user_type_display() if hasattr(obj, 'userprofile') else '-'
+    get_user_type.short_description = 'User Type'
     
     def get_inlines(self, request, obj=None):
         if obj:
-            if obj.user_type == 'beneficiary':
-                return [BeneficiaryInline]
-            elif obj.user_type == 'volunteer':
-                return [VolunteerInline]
-        return []
+            if hasattr(obj, 'userprofile'):
+                if obj.userprofile.user_type == 'beneficiary':
+                    return [UserProfileInline, BeneficiaryInline]
+                elif obj.userprofile.user_type == 'volunteer':
+                    return [UserProfileInline, VolunteerInline]
+        return [UserProfileInline]
 
+# Re-register UserAdmin
+admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
-admin.site.register(Beneficiary)
-admin.site.register(Volunteer)
+
+@admin.register(Beneficiary)
+class BeneficiaryAdmin(admin.ModelAdmin):
+    list_display = ('user', 'emergency_contact_name', 'mobility_limitations')
+    search_fields = ('user__username', 'user__email', 'emergency_contact_name')
+
+@admin.register(Volunteer)
+class VolunteerAdmin(admin.ModelAdmin):
+    list_display = ('user', 'transportation_type', 'verified', 'active', 'max_distance_km')
+    list_filter = ('verified', 'active')
+    search_fields = ('user__username', 'user__email', 'bio')
 

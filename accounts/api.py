@@ -1,8 +1,9 @@
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.contrib.auth.models import User
 from math import radians, cos, sin, asin, sqrt
-from .models import User, Beneficiary, Volunteer
+from .models import Beneficiary, Volunteer
 from .serializers import UserSerializer, BeneficiarySerializer, VolunteerSerializer
 
 # Haversine formula to calculate distance between two points
@@ -16,7 +17,11 @@ def haversine(lon1, lat1, lon2, lat2):
     
     # Haversine formula
     dlon = lon2 - lon1 
-    dlat = lat2 - lat1 
+    dlat = lat2 - lat1  lat1, lon2, lat2])
+    
+    # Haversine formula
+    dlon = lon2 - lon1 
+    dlat = lat2 - lat1
     a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
     c = 2 * asin(sqrt(a)) 
     r = 6371  # Radius of earth in kilometers
@@ -47,7 +52,7 @@ class BeneficiaryViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # Volunteers can see all beneficiaries, beneficiaries can only see themselves
         user = self.request.user
-        if user.user_type == 'beneficiary':
+        if hasattr(user, 'userprofile') and user.userprofile.user_type == 'beneficiary':
             return Beneficiary.objects.filter(user=user)
         return super().get_queryset()
 
@@ -82,8 +87,8 @@ class VolunteerViewSet(viewsets.ModelViewSet):
             
             # Filter by distance
             for volunteer in volunteers:
-                if volunteer.user.latitude and volunteer.user.longitude:
-                    distance = haversine(lng, lat, volunteer.user.longitude, volunteer.user.latitude)
+                if volunteer.user.userprofile.latitude and volunteer.user.userprofile.longitude:
+                    distance = haversine(lng, lat, volunteer.user.userprofile.longitude, volunteer.user.userprofile.latitude)
                     if distance <= distance_km:
                         volunteer.distance = distance  # Add distance attribute
                         nearby_volunteers.append(volunteer)

@@ -10,6 +10,10 @@ urlpatterns = [
     path('resources/<int:resource_id>/cancel/', views.cancel_resource, name='cancel_resource'),
     path('resources/types/', views.resource_type_list, name='resource_type_list'),
     path('resources/types/<int:type_id>/', views.resource_type_detail, name='resource_type_detail'),
+    path('resources/categories/', views.resource_category_list, name='resource_category_list'),
+    path('resources/categories/<int:category_id>/', views.resource_category_detail, name='resource_category_detail'),
     path('resources/map/', views.resource_map, name='resource_map'),
+    path('resources/beneficiary-categories/', views.beneficiary_categories, name='beneficiary_categories'),
+    path('api/resources/search/', views.resource_search_api, name='resource_search_api'),
 ]
 

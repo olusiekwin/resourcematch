@@ -5,323 +5,254 @@
 {% block content %}
 <!-- Hero Section -->
 <section class="hero-section bg-primary text-white py-5">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6">
-                <h1 class="display-4 fw-bold mb-3">Connecting Resources with Those Who Need Them Most</h1>
-                <p class="lead mb-4">Resource Match brings together beneficiaries, volunteers, and donors to create positive change in our community.</p>
-                <div class="d-grid gap-2 d-md-flex justify-content-md-start">
-                    {% if not user.is_authenticated %}
-                        <a href="{% url 'register' %}" class="btn btn-light btn-lg px-4">Get Started</a>
-                        <a href="{% url 'about' %}" class="btn btn-outline-light btn-lg px-4">Learn More</a>
-                    {% else %}
-                        {% if user.user_type == 'beneficiary' %}
-                            <a href="{% url 'request_resource' %}" class="btn btn-light btn-lg px-4">Request Resource</a>
-                        {% elif user.user_type == 'volunteer' %}
-                            <a href="{% url 'offer_resource' %}" class="btn btn-light btn-lg px-4">Offer Resource</a>
-                        {% elif user.user_type == 'donor' %}
-                            <a href="{% url 'campaign_list' %}" class="btn btn-light btn-lg px-4">Donate Now</a>
-                        {% endif %}
-                        <a href="{% url 'resource_map' %}" class="btn btn-outline-light btn-lg px-4">View Map</a>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="col-lg-6 d-none d-lg-block">
-                <img src="/static/images/hero-image.jpg" alt="Resource Match" class="img-fluid rounded shadow">
-            </div>
-        </div>
-    </div>
+  <div class="container">
+      <div class="row align-items-center">
+          <div class="col-lg-6">
+              <h1 class="display-4 fw-bold mb-3">Connecting Resources with Those Who Need Them Most</h1>
+              <p class="lead mb-4">Resource Match brings together beneficiaries, volunteers, and donors to create positive change in our community.</p>
+              <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                  {% if not user.is_authenticated %}
+                      <a href="{% url 'register' %}" class="btn btn-light btn-lg px-4">Get Started</a>
+                      <a href="{% url 'about' %}" class="btn btn-outline-light btn-lg px-4">Learn More</a>
+                  {% else %}
+                      {% if user.userprofile.user_type == 'beneficiary' %}
+                          <a href="{% url 'request_resource' %}" class="btn btn-light btn-lg px-4">Request Resource</a>
+                      {% elif user.userprofile.user_type == 'volunteer' %}
+                          <a href="{% url 'offer_resource' %}" class="btn btn-light btn-lg px-4">Offer Resource</a>
+                      {% elif user.userprofile.user_type == 'donor' %}
+                          <a href="{% url 'campaign_list' %}" class="btn btn-light btn-lg px-4">Donate Now</a>
+                      {% endif %}
+                      <a href="{% url 'resource_map' %}" class="btn btn-outline-light btn-lg px-4">View Map</a>
+                  {% endif %}
+              </div>
+          </div>
+          <div class="col-lg-6 d-none d-lg-block">
+              <img src="/static/images/hero-image.jpg" alt="Resource Match" class="img-fluid rounded shadow">
+          </div>
+      </div>
+  </div>
 </section>
 
 <!-- How It Works Section -->
 <section class="py-5">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="display-5 fw-bold">How It Works</h2>
-            <p class="lead">Our platform makes it easy to connect resources with those who need them.</p>
-        </div>
-        
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="feature-icon bg-primary text-white rounded-circle mb-3">
-                            <i class="bi bi-person-heart"></i>
-                        </div>
-                        <h3>For Beneficiaries</h3>
-                        <p>Request resources you need and get matched with volunteers who can help. Our platform prioritizes support for PWDs, women with medical conditions, widows, and elderly citizens.</p>
-                        <a href="{% url 'beneficiary_categories' %}" class="btn btn-outline-primary mt-3">Learn More</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="feature-icon bg-primary text-white rounded-circle mb-3">
-                            <i class="bi bi-hand-thumbs-up"></i>
-                        </div>
-                        <h3>For Volunteers</h3>
-                        <p>Offer your time, skills, or resources to help those in need. Browse requests in your area and choose how you want to contribute to your community.</p>
-                        <a href="{% url 'resource_list' %}?status=requested" class="btn btn-outline-primary mt-3">Browse Requests</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="feature-icon bg-primary text-white rounded-circle mb-3">
-                            <i class="bi bi-heart"></i>
-                        </div>
-                        <h3>For Donors</h3>
-                        <p>Support campaigns that fund resources for vulnerable groups. Your donations help provide essential support to those who need it most.</p>
-                        <a href="{% url 'campaign_list' %}" class="btn btn-outline-primary mt-3">View Campaigns</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+  <div class="container">
+      <div class="text-center mb-5">
+          <h2 class="display-5 fw-bold">How It Works</h2>
+          <p class="lead">Our platform makes it easy to connect resources with those who need them.</p>
+      </div>
+      
+      <div class="row g-4">
+          <div class="col-md-4">
+              <div class="card h-100 shadow-sm">
+                  <div class="card-body text-center p-4">
+                      <div class="feature-icon bg-primary text-white rounded-circle mb-3">
+                          <i class="bi bi-person-heart"></i>
+                      </div>
+                      <h3>For Beneficiaries</h3>
+                      <p>Request resources you need and get matched with volunteers who can help. Our platform prioritizes support for PWDs, women with medical conditions, widows, and elderly citizens.</p>
+                      <a href="{% url 'beneficiary_categories' %}" class="btn btn-outline-primary mt-3">Learn More</a>
+                  </div>
+              </div>
+          </div>
+          <div class="col-md-4">
+              <div class="card h-100 shadow-sm">
+                  <div class="card-body text-center p-4">
+                      <div class="feature-icon bg-primary text-white rounded-circle mb-3">
+                          <i class="bi bi-hand-thumbs-up"></i>
+                      </div>
+                      <h3>For Volunteers</h3>
+                      <p>Offer your time, skills, or resources to help those in need. Browse requests in your area and choose how you want to contribute to your community.</p>
+                      <a href="{% url 'resource_list' %}?status=requested" class="btn btn-outline-primary mt-3">Browse Requests</a>
+                  </div>
+              </div>
+          </div>
+          <div class="col-md-4">
+              <div class="card h-100 shadow-sm">
+                  <div class="card-body text-center p-4">
+                      <div class="feature-icon bg-primary text-white rounded-circle mb-3">
+                          <i class="bi bi-heart"></i>
+                      </div>
+                      <h3>For Donors</h3>
+                      <p>Support campaigns that fund resources for vulnerable groups. Your donations help provide essential support to those who need it most.</p>
+                      <a href="{% url 'campaign_list' %}" class="btn btn-outline-primary mt-3">View Campaigns</a>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
 </section>
 
 <!-- Featured Campaigns Section -->
 <section class="py-5 bg-light">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="display-6 fw-bold mb-0">Featured Campaigns</h2>
-            <a href="{% url 'campaign_list' %}" class="btn btn-primary">View All</a>
-        </div>
-        
-        {% if featured_campaigns %}
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                {% for campaign in featured_campaigns %}
-                    <div class="col">
-                        <div class="card h-100 shadow-sm">
-                            <div class="position-relative">
-                                <img src="{{ campaign.image.url|default:'/static/images/campaign-placeholder.jpg' }}" class="card-img-top" alt="{{ campaign.title }}" style="height: 180px; object-fit: cover;">
-                                <div class="position-absolute top-0 end-0 m-2">
-                                    <span class="badge bg-primary">{{ campaign.get_category_display }}</span>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <h5 class="card-title">{{ campaign.title }}</h5>
-                                <p class="card-text">{{ campaign.description|truncatechars:100 }}</p>
-                                
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span>{{ campaign.current_amount }} raised</span>
-                                    <span>{{ campaign.progress_percentage }}%</span>
-                                </div>
-                                <div class="progress mb-3" style="height: 5px;">
-                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ campaign.progress_percentage }}%" aria-valuenow="{{ campaign.progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                
-                                <div class="d-flex justify-content-between">
-                                    <small class="text-muted"><i class="bi bi-people"></i> {{ campaign.donors_count }} donors</small>
-                                    <small class="text-muted"><i class="bi bi-clock"></i> {{ campaign.days_left }} days left</small>
-                                </div>
-                            </div>
-                            <div class="card-footer">
-                                <div class="d-grid">
-                                    <a href="{% url 'campaign_detail' campaign.id %}" class="btn btn-outline-primary">
-                                        View Campaign
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="text-center py-5">
-                <i class="bi bi-search display-1 text-muted"></i>
-                <p class="lead mt-3">No featured campaigns at the moment.</p>
-            </div>
-        {% endif %}
-    </div>
+  <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2 class="display-6 fw-bold mb-0">Featured Campaigns</h2>
+          <a href="{% url 'campaign_list' %}" class="btn btn-primary">View All</a>
+      </div>
+      
+      {% if featured_campaigns %}
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+              {% for campaign in featured_campaigns %}
+                  <div class="col">
+                      <div class="card h-100 shadow-sm">
+                          <div class="position-relative">
+                              <img src="{{ campaign.image.url|default:'/static/images/campaign-placeholder.jpg' }}" class="card-img-top" alt="{{ campaign.title }}" style="height: 180px; object-fit: cover;">
+                              <div class="position-absolute top-0 end-0 m-2">
+                                  <span class="badge bg-primary">{{ campaign.get_category_display }}</span>
+                              </div>
+                          </div>
+                          <div class="card-body">
+                              <h5 class="card-title">{{ campaign.title }}</h5>
+                              <p class="card-text">{{ campaign.description|truncatechars:100 }}</p>
+                              
+                              <div class="d-flex justify-content-between mb-1">
+                                  <span>{{ campaign.current_amount }} raised</span>
+                                  <span>{{ campaign.progress_percentage }}%</span>
+                              </div>
+                              <div class="progress mb-3" style="height: 5px;">
+                                  <div class="progress-bar bg-success" role="progressbar" style="width: {{ campaign.progress_percentage }}%" aria-valuenow="{{ campaign.progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                              </div>
+                              
+                              <div class="d-flex justify-content-between">
+                                  <small class="text-muted"><i class="bi bi-people"></i> {{ campaign.donors_count }} donors</small>
+                                  <small class="text-muted"><i class="bi bi-clock"></i> {{ campaign.days_left }} days left</small>
+                              </div>
+                          </div>
+                          <div class="card-footer">
+                              <div class="d-grid">
+                                  <a href="{% url 'campaign_detail' campaign.id %}" class="btn btn-outline-primary">
+                                      View Campaign
+                                  </a>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              {% endfor %}
+          </div>
+      {% else %}
+          <div class="text-center py-5">
+              <i class="bi bi-search display-1 text-muted"></i>
+              <p class="lead mt-3">No featured campaigns at the moment.</p>
+          </div>
+      {% endif %}
+  </div>
 </section>
 
 <!-- Beneficiary Categories Section -->
 <section class="py-5">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="display-6 fw-bold">Beneficiary Categories</h2>
-            <p class="lead">Resource Match focuses on supporting these vulnerable groups in our community.</p>
-        </div>
-        
-        <div class="row g-4">
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="category-icon bg-primary text-white rounded-circle mb-3">
-                            <i class="bi bi-person-wheelchair"></i>
-                        </div>
-                        <h4>People with Disabilities</h4>
-                        <p>Support for individuals with physical, cognitive, sensory, and developmental disabilities.</p>
-                        <a href="{% url 'beneficiary_categories' %}" class="btn btn-outline-primary mt-3">Learn More</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="category-icon bg-primary text-white rounded-circle mb-3">
-                            <i class="bi bi-heart-pulse"></i>
-                        </div>
-                        <h4>Medical Conditions</h4>
-                        <p>Support for women with fistula, endometriosis, cancer, and other medical conditions.</p>
-                        <a href="{% url 'beneficiary_categories' %}" class="btn btn-outline-primary mt-3">Learn More</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="category-icon bg-primary text-white rounded-circle mb-3">
-                            <i class="bi bi-people"></i>
-                        </div>
-                        <h4>Widows</h4>
-                        <p>Support for widows facing emotional, financial, and social challenges after losing their spouse.</p>
-                        <a href="{% url 'beneficiary_categories' %}" class="btn btn-outline-primary mt-3">Learn More</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="category-icon bg-primary text-white rounded-circle mb-3">
-                            <i class="bi bi-person-cane"></i>
-                        </div>
-                        <h4>Elderly Citizens</h4>
-                        <p>Support for elderly individuals facing health, mobility, isolation, and financial challenges.</p>
-                        <a href="{% url 'beneficiary_categories' %}" class="btn btn-outline-primary mt-3">Learn More</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+  <div class="container">
+      <div class="text-center mb-5">
+          <h2 class="display-6 fw-bold">Beneficiary Categories</h2>
+          <p class="lead">Resource Match focuses on supporting these vulnerable groups in our community.</p>
+      </div>
+      
+      <div class="row g-4">
+          <div class="col-md-6 col-lg-3">
+              <div class="card h-100 shadow-sm">
+                  <div class="card-body text-center p-4">
+                      <div class="category-icon bg-primary text-white rounded-circle mb-3">
+                          <i class="bi bi-person-wheelchair"></i>
+                      </div>
+                      <h4>People with Disabilities</h4>
+                      <p>Support for individuals with physical, cognitive, sensory, and developmental disabilities.</p>
+                      <a href="{% url 'beneficiary_categories' %}" class="btn btn-outline-primary mt-3">Learn More</a>
+                  </div>
+              </div>
+          </div>
+          <div class="col-md-6 col-lg-3">
+              <div class="card h-100 shadow-sm">
+                  <div class="card-body text-center p-4">
+                      <div class="category-icon bg-primary text-white rounded-circle mb-3">
+                          <i class="bi bi-heart-pulse"></i>
+                      </div>
+                      <h4>Medical Conditions</h4>
+                      <p>Support for women with fistula, endometriosis, cancer, and other medical conditions.</p>
+                      <a href="{% url 'beneficiary_categories' %}" class="btn btn-outline-primary mt-3">Learn More</a>
+                  </div>
+              </div>
+          </div>
+          <div class="col-md-6 col-lg-3">
+              <div class="card h-100 shadow-sm">
+                  <div class="card-body text-center p-4">
+                      <div class="category-icon bg-primary text-white rounded-circle mb-3">
+                          <i class="bi bi-people"></i>
+                      </div>
+                      <h4>Widows</h4>
+                      <p>Support for widows facing emotional, financial, and social challenges after losing their spouse.</p>
+                      <a href="{% url 'beneficiary_categories' %}" class="btn btn-outline-primary mt-3">Learn More</a>
+                  </div>
+              </div>
+          </div>
+          <div class="col-md-6 col-lg-3">
+              <div class="card h-100 shadow-sm">
+                  <div class="card-body text-center p-4">
+                      <div class="category-icon bg-primary text-white rounded-circle mb-3">
+                          <i class="bi bi-person-cane"></i>
+                      </div>
+                      <h4>Elderly Citizens</h4>
+                      <p>Support for elderly individuals facing health, mobility, isolation, and financial challenges.</p>
+                      <a href="{% url 'beneficiary_categories' %}" class="btn btn-outline-primary mt-3">Learn More</a>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
 </section>
 
 <!-- Impact Statistics Section -->
 <section class="py-5 bg-primary text-white">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="display-6 fw-bold">Our Impact</h2>
-            <p class="lead">Together, we're making a difference in our community.</p>
-        </div>
-        
-        <div class="row text-center">
-            <div class="col-md-3 mb-4 mb-md-0">
-                <div class="display-4 fw-bold mb-2">{{ stats.beneficiaries_count }}</div>
-                <p class="h5">Beneficiaries Helped</p>
-            </div>
-            <div class="col-md-3 mb-4 mb-md-0">
-                <div class="display-4 fw-bold mb-2">{{ stats.volunteers_count }}</div>
-                <p class="h5">Active Volunteers</p>
-            </div>
-            <div class="col-md-3 mb-4 mb-md-0">
-                <div class="display-4 fw-bold mb-2">{{ stats.resources_count }}</div>
-                <p class="h5">Resources Matched</p>
-            </div>
-            <div class="col-md-3">
-                <div class="display-4 fw-bold mb-2">{{ stats.donations_amount }}</div>
-                <p class="h5">Funds Raised</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Testimonials Section -->
-<section class="py-5">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="display-6 fw-bold">Success Stories</h2>
-            <p class="lead">Hear from those who have been impacted by Resource Match.</p>
-        </div>
-        
-        <div class="row">
-            <div class="col-lg-8 mx-auto">
-                <div id="testimonialCarousel" class="carousel slide" data-bs-ride="carousel">
-                    <div class="carousel-inner">
-                        <div class="carousel-item active">
-                            <div class="card shadow">
-                                <div class="card-body p-4 p-md-5">
-                                    <div class="d-flex justify-content-center mb-4">
-                                        <img src="/static/images/testimonial-1.jpg" class="rounded-circle testimonial-img" alt="Sarah M.">
-                                    </div>
-                                    <p class="lead mb-4">"As a person with a disability, finding accessible resources was always a challenge. Resource Match connected me with volunteers who provided the mobility aids I needed. This platform has truly changed my life."</p>
-                                    <div class="text-center">
-                                        <h5 class="mb-0">Sarah M.</h5>
-                                        <p class="text-muted">Beneficiary - PWD</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="carousel-item">
-                            <div class="card shadow">
-                                <div class="card-body p-4 p-md-5">
-                                    <div class="d-flex justify-content-center mb-4">
-                                        <img src="/static/images/testimonial-2.jpg" class="rounded-circle testimonial-img" alt="John D.">
-                                    </div>
-                                    <p class="lead mb-4">"Volunteering through Resource Match has been incredibly rewarding. I've been able to help elderly citizens in my neighborhood with transportation and home care. The platform makes it easy to find opportunities to make a difference."</p>
-                                    <div class="text-center">
-                                        <h5 class="mb-0">John D.</h5>
-                                        <p class="text-muted">Volunteer</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="carousel-item">
-                            <div class="card shadow">
-                                <div class="card-body p-4 p-md-5">
-                                    <div class="d-flex justify-content-center mb-4">
-                                        <img src="/static/images/testimonial-3.jpg" class="rounded-circle testimonial-img" alt="Maria L.">
-                                    </div>
-                                    <p class="lead mb-4">"After losing my husband, I struggled to make ends meet. The support I received through Resource Match's widow assistance program helped me get back on my feet. I'm now able to provide for my children and rebuild our lives."</p>
-                                    <div class="text-center">
-                                        <h5 class="mb-0">Maria L.</h5>
-                                        <p class="text-muted">Beneficiary - Widow</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Previous</span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="next">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Next</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+  <div class="container">
+      <div class="text-center mb-5">
+          <h2 class="display-6 fw-bold">Our Impact</h2>
+          <p class="lead">Together, we're making a difference in our community.</p>
+      </div>
+      
+      <div class="row text-center">
+          <div class="col-md-3 mb-4 mb-md-0">
+              <div class="display-4 fw-bold mb-2">{{ stats.beneficiaries_count }}</div>
+              <p class="h5">Beneficiaries Helped</p>
+          </div>
+          <div class="col-md-3 mb-4 mb-md-0">
+              <div class="display-4 fw-bold mb-2">{{ stats.volunteers_count }}</div>
+              <p class="h5">Active Volunteers</p>
+          </div>
+          <div class="col-md-3 mb-4 mb-md-0">
+              <div class="display-4 fw-bold mb-2">{{ stats.resources_count }}</div>
+              <p class="h5">Resources Matched</p>
+          </div>
+          <div class="col-md-3">
+              <div class="display-4 fw-bold mb-2">{{ stats.donations_amount }}</div>
+              <p class="h5">Funds Raised</p>
+          </div>
+      </div>
+  </div>
 </section>
 
 <!-- Call to Action Section -->
 <section class="py-5 bg-light">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-8 mx-auto text-center">
-                <h2 class="display-5 fw-bold mb-3">Ready to Make a Difference?</h2>
-                <p class="lead mb-4">Join our community of volunteers, donors, and beneficiaries working together to create positive change.</p>
-                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-                    {% if not user.is_authenticated %}
-                        <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-4 gap-3">Register Now</a>
-                        <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg px-4">Login</a>
-                    {% else %}
-                        {% if user.user_type == 'beneficiary' %}
-                            <a href="{% url 'request_resource' %}" class="btn btn-primary btn-lg px-4">Request Resource</a>
-                        {% elif user.user_type == 'volunteer' %}
-                            <a href="{% url 'offer_resource' %}" class="btn btn-primary btn-lg px-4">Offer Resource</a>
-                        {% elif user.user_type == 'donor' %}
-                            <a href="{% url 'campaign_list' %}" class="btn btn-primary btn-lg px-4">Donate Now</a>
-                        {% endif %}
-                        <a href="{% url 'resource_map' %}" class="btn btn-outline-primary btn-lg px-4">View Map</a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
+  <div class="container">
+      <div class="row align-items-center">
+          <div class="col-lg-8 mx-auto text-center">
+              <h2 class="display-5 fw-bold mb-3">Ready to Make a Difference?</h2>
+              <p class="lead mb-4">Join our community of volunteers, donors, and beneficiaries working together to create positive change.</p>
+              <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                  {% if not user.is_authenticated %}
+                      <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-4 gap-3">Register Now</a>
+                      <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg px-4">Login</a>
+                  {% else %}
+                      {% if user.userprofile.user_type == 'beneficiary' %}
+                          <a href="{% url 'request_resource' %}" class="btn btn-primary btn-lg px-4">Request Resource</a>
+                      {% elif user.userprofile.user_type == 'volunteer' %}
+                          <a href="{% url 'offer_resource' %}" class="btn btn-primary btn-lg px-4">Offer Resource</a>
+                      {% elif user.userprofile.user_type == 'donor' %}
+                          <a href="{% url 'campaign_list' %}" class="btn btn-primary btn-lg px-4">Donate Now</a>
+                      {% endif %}
+                      <a href="{% url 'resource_map' %}" class="btn btn-outline-primary btn-lg px-4">View Map</a>
+                  {% endif %}
+              </div>
+          </div>
+      </div>
+  </div>
 </section>
 {% endblock %}
 
