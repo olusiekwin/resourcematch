@@ -1,12 +1,17 @@
 from django.contrib import admin
 from .models import Match, Feedback
 
+class FeedbackInline(admin.TabularInline):
+    model = Feedback
+    extra = 0
+
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
     list_display = ('id', 'resource', 'beneficiary', 'volunteer', 'status', 'created_at')
     list_filter = ('status', 'created_at')
     search_fields = ('resource__name', 'beneficiary__user__username', 'volunteer__user__username')
     date_hierarchy = 'created_at'
+    inlines = [FeedbackInline]
 
 @admin.register(Feedback)
 class FeedbackAdmin(admin.ModelAdmin):

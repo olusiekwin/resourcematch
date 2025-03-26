@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 from .models import Notification
 
-
 def create_notification(recipient, title, message, link=None, is_admin=False):
     """
     Create a notification for a user or for admin

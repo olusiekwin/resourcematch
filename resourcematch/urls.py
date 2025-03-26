@@ -14,6 +14,9 @@ urlpatterns = [
     path('', include('notifications.urls')),
     path('', include('campaigns.urls')),
     
+    # API URLs
+    path('api/', include('resourcematch.api_urls')),
+    
     # Static pages
     path('about/', TemplateView.as_view(template_name='about.html'), name='about'),
     path('contact/', TemplateView.as_view(template_name='contact.html'), name='contact'),
@@ -21,6 +24,8 @@ urlpatterns = [
     path('terms/', TemplateView.as_view(template_name='terms.html'), name='terms'),
 ]
 
+# Serve static and media files in development
 if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

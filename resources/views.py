@@ -24,18 +24,19 @@ def resource_list(request):
         resources = resources.filter(resource_type__name=resource_type)
     
     # Filter based on user type
-    if user.user_type == 'beneficiary':
-        beneficiary = user.beneficiary_profile
-        resources = resources.filter(
-            Q(requested_by=beneficiary) | 
-            Q(status='available')
-        )
-    elif user.user_type == 'volunteer':
-        volunteer = user.volunteer_profile
-        resources = resources.filter(
-            Q(offered_by=volunteer) | 
-            Q(status='requested')
-        )
+    if hasattr(user, 'userprofile'):
+        if user.userprofile.user_type == 'beneficiary':
+            beneficiary = user.beneficiary_profile
+            resources = resources.filter(
+                Q(requested_by=beneficiary) | 
+                Q(status='available')
+            )
+        elif user.userprofile.user_type == 'volunteer':
+            volunteer = user.volunteer_profile
+            resources = resources.filter(
+                Q(offered_by=volunteer) | 
+                Q(status='requested')
+            )
     
     # Get all resource types for filter dropdown
     resource_types = ResourceType.objects.all()
@@ -59,20 +60,27 @@ def resource_detail(request, resource_id):
     # Check if the user has already given feedback for this match
     has_feedback = False
     if match and match.status == 'completed':
-        if request.user.user_type == 'beneficiary':
-            has_feedback = match.beneficiary_feedback is not None
-        elif request.user.user_type == 'volunteer':
-            has_feedback = match.volunteer_feedback is not None
+        if request.user.userprofile.user_type == 'beneficiary':
+            has_feedback = match.feedbacks.filter(is_from_beneficiary=True).exists()
+        elif request.user.userprofile.user_type == 'volunteer':
+            has_feedback = match.feedbacks.filter(is_from_beneficiary=False).exists()
+    
+    # Get similar resources
+    similar_resources = Resource.objects.filter(
+        resource_type=resource.resource_type,
+        status=resource.status
+    ).exclude(id=resource.id)[:3]
     
     return render(request, 'resources/resource_detail.html', {
         'resource': resource,
         'match': match,
-        'has_feedback': has_feedback
+        'has_feedback': has_feedback,
+        'similar_resources': similar_resources
     })
 
 @login_required
 def request_resource(request):
-    if request.user.user_type != 'beneficiary':
+    if not hasattr(request.user, 'userprofile') or request.user.userprofile.user_type != 'beneficiary':
         messages.error(request, 'Only beneficiaries can request resources.')
         return redirect('resource_list')
     
@@ -89,7 +97,7 @@ def request_resource(request):
 
 @login_required
 def offer_resource(request):
-    if request.user.user_type != 'volunteer':
+    if not hasattr(request.user, 'userprofile') or request.user.userprofile.user_type != 'volunteer':
         messages.error(request, 'Only volunteers can offer resources.')
         return redirect('resource_list')
     
@@ -109,11 +117,15 @@ def edit_resource(request, resource_id):
     resource = get_object_or_404(Resource, id=resource_id)
     
     # Check if user has permission to edit this resource
-    if request.user.user_type == 'beneficiary' and resource.requested_by != request.user.beneficiary_profile:
+    if (hasattr(request.user, 'userprofile') and 
+        request.user.userprofile.user_type == 'beneficiary' and 
+        resource.requested_by != request.user.beneficiary_profile):
         messages.error(request, 'You do not have permission to edit this resource.')
         return redirect('resource_list')
     
-    if request.user.user_type == 'volunteer' and resource.offered_by != request.user.volunteer_profile:
+    if (hasattr(request.user, 'userprofile') and 
+        request.user.userprofile.user_type == 'volunteer' and 
+        resource.offered_by != request.user.volunteer_profile):
         messages.error(request, 'You do not have permission to edit this resource.')
         return redirect('resource_list')
     
@@ -133,11 +145,15 @@ def cancel_resource(request, resource_id):
     resource = get_object_or_404(Resource, id=resource_id)
     
     # Check if user has permission to cancel this resource
-    if request.user.user_type == 'beneficiary' and resource.requested_by != request.user.beneficiary_profile:
+    if (hasattr(request.user, 'userprofile') and 
+        request.user.userprofile.user_type == 'beneficiary' and 
+        resource.requested_by != request.user.beneficiary_profile):
         messages.error(request, 'You do not have permission to cancel this resource.')
         return redirect('resource_list')
     
-    if request.user.user_type == 'volunteer' and resource.offered_by != request.user.volunteer_profile:
+    if (hasattr(request.user, 'userprofile') and 
+        request.user.userprofile.user_type == 'volunteer' and 
+        resource.offered_by != request.user.volunteer_profile):
         messages.error(request, 'You do not have permission to cancel this resource.')
         return redirect('resource_list')
     
@@ -171,18 +187,25 @@ def resource_map(request):
     
     # Filter based on user type
     user = request.user
-    if user.user_type == 'beneficiary':
-        beneficiary = user.beneficiary_profile
-        resources = resources.filter(
-            Q(requested_by=beneficiary) | 
-            Q(status='available')
-        )
-    elif user.user_type == 'volunteer':
-        volunteer = user.volunteer_profile
-        resources = resources.filter(
-            Q(offered_by=volunteer) | 
-            Q(status='requested')
-        )
+    if hasattr(user, 'userprofile'):
+        if user.userprofile.user_type == 'beneficiary':
+            beneficiary = user.beneficiary_profile
+            resources = resources.filter(
+                Q(requested_by=beneficiary) | 
+                Q(status='available')
+            )
+        elif user.userprofile.user_type == 'volunteer':
+            volunteer = user.volunteer_profile
+            resources = resources.filter(
+                Q(offered_by=volunteer) | 
+                Q(status='requested')
+            )
     
-    return render(request, 'resources/resource_map.html', {'resources': resources})
+    # Get all resource types for filter
+    resource_types = ResourceType.objects.all()
+    
+    return render(request, 'resources/resource_map.html', {
+        'resources': resources,
+        'resource_types': resource_types
+    })
 

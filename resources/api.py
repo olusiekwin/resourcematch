@@ -47,7 +47,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(resource_type__name=resource_type)
         
         # If beneficiary, show only their requests and available resources
-        if user.user_type == 'beneficiary':
+        if hasattr(user, 'userprofile') and user.userprofile.user_type == 'beneficiary':
             beneficiary = user.beneficiary_profile
             return queryset.filter(
                 models.Q(requested_by=beneficiary) | 
@@ -55,7 +55,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
             )
         
         # If volunteer, show their offered resources and available requests
-        elif user.user_type == 'volunteer':
+        elif hasattr(user, 'userprofile') and user.userprofile.user_type == 'volunteer':
             volunteer = user.volunteer_profile
             return queryset.filter(
                 models.Q(offered_by=volunteer) | 

@@ -4,7 +4,6 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from .models import Notification
 
-
 @login_required
 def notification_list(request):
     notifications = Notification.objects.filter(recipient=request.user).order_by('-created_at')
@@ -14,7 +13,6 @@ def notification_list(request):
     }
     
     return render(request, 'notifications/notification_list.html', context)
-
 
 @login_required
 def notification_detail(request, notification_id):
@@ -31,7 +29,6 @@ def notification_detail(request, notification_id):
     
     return render(request, 'notifications/notification_detail.html', context)
 
-
 @login_required
 @require_POST
 def mark_notification_read(request, notification_id):
@@ -41,7 +38,6 @@ def mark_notification_read(request, notification_id):
     notification.save()
     
     return JsonResponse({'status': 'success'})
-
 
 @login_required
 @require_POST

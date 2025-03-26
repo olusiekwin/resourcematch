@@ -5,18 +5,21 @@ from django.utils import timezone
 from .models import Match, Feedback
 from .forms import MatchForm, FeedbackForm
 from resources.models import Resource
-from notifications.models import Notification
+from notifications.utils import create_notification
 
 @login_required
 def match_list(request):
     user = request.user
     
-    if user.user_type == 'beneficiary':
-        matches = Match.objects.filter(beneficiary=user.beneficiary_profile)
-    elif user.user_type == 'volunteer':
-        matches = Match.objects.filter(volunteer=user.volunteer_profile)
-    else:  # Admin
-        matches = Match.objects.all()
+    if hasattr(user, 'userprofile'):
+        if user.userprofile.user_type == 'beneficiary':
+            matches = Match.objects.filter(beneficiary=user.beneficiary_profile)
+        elif user.userprofile.user_type == 'volunteer':
+            matches = Match.objects.filter(volunteer=user.volunteer_profile)
+        else:  # Admin or donor
+            matches = Match.objects.all()
+    else:
+        matches = Match.objects.none()
     
     # Filter by status if provided
     status = request.GET.get('status')
@@ -34,22 +37,28 @@ def match_detail(request, match_id):
     
     # Check if user has permission to view this match
     user = request.user
-    if user.user_type == 'beneficiary' and match.beneficiary != user.beneficiary_profile:
+    if (hasattr(user, 'userprofile') and 
+        user.userprofile.user_type == 'beneficiary' and 
+        match.beneficiary  and 
+        user.userprofile.user_type == 'beneficiary' and 
+        match.beneficiary != user.beneficiary_profile):
         messages.error(request, 'You do not have permission to view this match.')
         return redirect('match_list')
     
-    if user.user_type == 'volunteer' and match.volunteer != user.volunteer_profile:
+    if (hasattr(user, 'userprofile') and 
+        user.userprofile.user_type == 'volunteer' and 
+        match.volunteer != user.volunteer_profile):
         messages.error(request, 'You do not have permission to view this match.')
         return redirect('match_list')
     
     # Check if the user has already given feedback
     has_feedback = False
     if match.status == 'completed':
-        feedbacks = match.feedbacks.all()
-        if user.user_type == 'beneficiary':
-            has_feedback = feedbacks.filter(is_from_beneficiary=True).exists()
-        elif user.user_type == 'volunteer':
-            has_feedback = feedbacks.filter(is_from_beneficiary=False).exists()
+        if hasattr(user, 'userprofile'):
+            if user.userprofile.user_type == 'beneficiary':
+                has_feedback = match.feedbacks.filter(is_from_beneficiary=True).exists()
+            elif user.userprofile.user_type == 'volunteer':
+                has_feedback = match.feedbacks.filter(is_from_beneficiary=False).exists()
     
     return render(request, 'matches/match_detail.html', {
         'match': match,
@@ -59,7 +68,7 @@ def match_detail(request, match_id):
 @login_required
 def create_match(request, resource_id):
     # Only admins can manually create matches
-    if request.user.user_type != 'admin':
+    if not request.user.is_staff:
         messages.error(request, 'You do not have permission to create matches.')
         return redirect('resource_list')
     
@@ -79,15 +88,15 @@ def create_match(request, resource_id):
             resource.save()
             
             # Create notifications
-            Notification.objects.create(
-                user=match.beneficiary.user,
+            create_notification(
+                recipient=match.beneficiary.user,
                 title='New Match Created',
                 message=f'Your resource request "{resource.name}" has been matched with a volunteer.',
                 link=f'/matches/{match.id}/'
             )
             
-            Notification.objects.create(
-                user=match.volunteer.user,
+            create_notification(
+                recipient=match.volunteer.user,
                 title='New Match Created',
                 message=f'You have been matched to provide "{resource.name}" to a beneficiary.',
                 link=f'/matches/{match.id}/'
@@ -106,7 +115,7 @@ def create_match(request, resource_id):
 @login_required
 def volunteer_match(request, resource_id):
     # Only volunteers can volunteer for matches
-    if request.user.user_type != 'volunteer':
+    if not hasattr(request.user, 'userprofile') or request.user.userprofile.user_type != 'volunteer':
         messages.error(request, 'Only volunteers can volunteer for matches.')
         return redirect('resource_list')
     
@@ -127,8 +136,8 @@ def volunteer_match(request, resource_id):
         resource.save()
         
         # Create notifications
-        Notification.objects.create(
-            user=match.beneficiary.user,
+        create_notification(
+            recipient=match.beneficiary.user,
             title='Volunteer Found',
             message=f'A volunteer has offered to help with your request "{resource.name}".',
             link=f'/matches/{match.id}/'
@@ -144,7 +153,7 @@ def accept_match(request, match_id):
     match = get_object_or_404(Match, id=match_id, status='pending')
     
     # Only the volunteer can accept a match
-    if request.user.user_type != 'volunteer' or match.volunteer != request.user.volunteer_profile:
+    if not hasattr(request.user, 'userprofile') or request.user.userprofile.user_type != 'volunteer' or match.volunteer != request.user.volunteer_profile:
         messages.error(request, 'You do not have permission to accept this match.')
         return redirect('match_list')
     
@@ -153,8 +162,8 @@ def accept_match(request, match_id):
         match.save()
         
         # Create notification for beneficiary
-        Notification.objects.create(
-            user=match.beneficiary.user,
+        create_notification(
+            recipient=match.beneficiary.user,
             title='Match Accepted',
             message=f'The volunteer has accepted the match for "{match.resource.name}".',
             link=f'/matches/{match.id}/'
@@ -169,7 +178,7 @@ def complete_match(request, match_id):
     match = get_object_or_404(Match, id=match_id, status='accepted')
     
     # Only the volunteer can mark a match as completed
-    if request.user.user_type != 'volunteer' or match.volunteer != request.user.volunteer_profile:
+    if not hasattr(request.user, 'userprofile') or request.user.userprofile.user_type != 'volunteer' or match.volunteer != request.user.volunteer_profile:
         messages.error(request, 'You do not have permission to complete this match.')
         return redirect('match_list')
     
@@ -183,8 +192,8 @@ def complete_match(request, match_id):
         resource.save()
         
         # Create notification for beneficiary
-        Notification.objects.create(
-            user=match.beneficiary.user,
+        create_notification(
+            recipient=match.beneficiary.user,
             title='Match Completed',
             message=f'The volunteer has marked the match for "{match.resource.name}" as completed. Please provide feedback.',
             link=f'/matches/{match.id}/feedback/'
@@ -200,11 +209,15 @@ def cancel_match(request, match_id):
     
     # Check if user has permission to cancel this match
     user = request.user
-    if user.user_type == 'beneficiary' and match.beneficiary != user.beneficiary_profile:
+    if (hasattr(user, 'userprofile') and 
+        user.userprofile.user_type == 'beneficiary' and 
+        match.beneficiary != user.beneficiary_profile):
         messages.error(request, 'You do not have permission to cancel this match.')
         return redirect('match_list')
     
-    if user.user_type == 'volunteer' and match.volunteer != user.volunteer_profile:
+    if (hasattr(user, 'userprofile') and 
+        user.userprofile.user_type == 'volunteer' and 
+        match.volunteer != user.volunteer_profile):
         messages.error(request, 'You do not have permission to cancel this match.')
         return redirect('match_list')
     
@@ -214,23 +227,23 @@ def cancel_match(request, match_id):
         
         # Update resource status
         resource = match.resource
-        if user.user_type == 'beneficiary':
+        if hasattr(user, 'userprofile') and user.userprofile.user_type == 'beneficiary':
             resource.status = 'cancelled'
         else:
             resource.status = 'requested'  # Reset to requested so another volunteer can help
         resource.save()
         
         # Create notification for the other party
-        if user.user_type == 'beneficiary':
-            Notification.objects.create(
-                user=match.volunteer.user,
+        if hasattr(user, 'userprofile') and user.userprofile.user_type == 'beneficiary':
+            create_notification(
+                recipient=match.volunteer.user,
                 title='Match Cancelled',
                 message=f'The beneficiary has cancelled the match for "{match.resource.name}".',
                 link=f'/matches/{match.id}/'
             )
         else:
-            Notification.objects.create(
-                user=match.beneficiary.user,
+            create_notification(
+                recipient=match.beneficiary.user,
                 title='Match Cancelled',
                 message=f'The volunteer has cancelled the match for "{match.resource.name}".',
                 link=f'/matches/{match.id}/'
@@ -246,16 +259,20 @@ def give_feedback(request, match_id):
     
     # Check if user has permission to give feedback for this match
     user = request.user
-    if user.user_type == 'beneficiary' and match.beneficiary != user.beneficiary_profile:
+    if (hasattr(user, 'userprofile') and 
+        user.userprofile.user_type == 'beneficiary' and 
+        match.beneficiary != user.beneficiary_profile):
         messages.error(request, 'You do not have permission to give feedback for this match.')
         return redirect('match_list')
     
-    if user.user_type == 'volunteer' and match.volunteer != user.volunteer_profile:
+    if (hasattr(user, 'userprofile') and 
+        user.userprofile.user_type == 'volunteer' and 
+        match.volunteer != user.volunteer_profile):
         messages.error(request, 'You do not have permission to give feedback for this match.')
         return redirect('match_list')
     
     # Check if the user has already given feedback
-    is_from_beneficiary = (user.user_type == 'beneficiary')
+    is_from_beneficiary = (hasattr(user, 'userprofile') and user.userprofile.user_type == 'beneficiary')
     existing_feedback = match.feedbacks.filter(is_from_beneficiary=is_from_beneficiary).first()
     
     if existing_feedback:
@@ -272,15 +289,15 @@ def give_feedback(request, match_id):
             
             # Create notification for the other party
             if is_from_beneficiary:
-                Notification.objects.create(
-                    user=match.volunteer.user,
+                create_notification(
+                    recipient=match.volunteer.user,
                     title='New Feedback Received',
                     message=f'The beneficiary has provided feedback for the match "{match.resource.name}".',
                     link=f'/matches/{match.id}/'
                 )
             else:
-                Notification.objects.create(
-                    user=match.beneficiary.user,
+                create_notification(
+                    recipient=match.beneficiary.user,
                     title='New Feedback Received',
                     message=f'The volunteer has provided feedback for the match "{match.resource.name}".',
                     link=f'/matches/{match.id}/'

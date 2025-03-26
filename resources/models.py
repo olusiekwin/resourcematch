@@ -1,5 +1,5 @@
 from django.db import models
-from accounts.models import User, Beneficiary, Volunteer
+from accounts.models import Beneficiary, Volunteer
 
 class ResourceType(models.Model):
     name = models.CharField(max_length=100)

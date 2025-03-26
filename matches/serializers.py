@@ -12,7 +12,6 @@ class MatchSerializer(serializers.ModelSerializer):
         model = Match
         fields = ['id', 'beneficiary', 'volunteer', 'resource', 
                   'beneficiary_details', 'volunteer_details', 'resource_details',
-                  'status', 'created_at', 'accepted_at', 'completed_at', 
-                  'notes', 'estimated_arrival']
-        read_only_fields = ['id', 'created_at', 'accepted_at', 'completed_at']
+                  'status', 'created_at', 'notes', 'estimated_arrival']
+        read_only_fields = ['id', 'created_at']
 

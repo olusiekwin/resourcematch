@@ -30,9 +30,9 @@ class ResourceRequestForm(forms.ModelForm):
         if self.beneficiary:
             resource.requested_by = self.beneficiary
             # Use beneficiary's location if available
-            if self.beneficiary.user.latitude and self.beneficiary.user.longitude:
-                resource.latitude = self.beneficiary.user.latitude
-                resource.longitude = self.beneficiary.user.longitude
+            if self.beneficiary.user.userprofile.latitude and self.beneficiary.user.userprofile.longitude:
+                resource.latitude = self.beneficiary.user.userprofile.latitude
+                resource.longitude = self.beneficiary.user.userprofile.longitude
         if commit:
             resource.save()
         return resource
@@ -52,9 +52,9 @@ class ResourceOfferForm(forms.ModelForm):
         if self.volunteer:
             resource.offered_by = self.volunteer
             # Use volunteer's location if available
-            if self.volunteer.user.latitude and self.volunteer.user.longitude:
-                resource.latitude = self.volunteer.user.latitude
-                resource.longitude = self.volunteer.user.longitude
+            if self.volunteer.user.userprofile.latitude and self.volunteer.user.userprofile.longitude:
+                resource.latitude = self.volunteer.user.userprofile.latitude
+                resource.longitude = self.volunteer.user.userprofile.longitude
         if commit:
             resource.save()
         return resource

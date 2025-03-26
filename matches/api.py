@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from django.utils import timezone
 from .models import Match
 from .serializers import MatchSerializer
-from notifications.models import Notification
+from notifications.utils import create_notification
 
 class MatchViewSet(viewsets.ModelViewSet):
     queryset = Match.objects.all()
@@ -14,12 +14,12 @@ class MatchViewSet(viewsets.ModelViewSet):
         user = self.request.user
         
         # If beneficiary, show only their matches
-        if user.user_type == 'beneficiary':
+        if hasattr(user, 'userprofile') and user.userprofile.user_type == 'beneficiary':
             beneficiary = user.beneficiary_profile
             return Match.objects.filter(beneficiary=beneficiary)
         
         # If volunteer, show only their matches
-        elif user.user_type == 'volunteer':
+        elif hasattr(user, 'userprofile') and user.userprofile.user_type == 'volunteer':
             volunteer = user.volunteer_profile
             return Match.objects.filter(volunteer=volunteer)
         
@@ -30,7 +30,9 @@ class MatchViewSet(viewsets.ModelViewSet):
         match = self.get_object()
         
         # Only the volunteer can accept a match
-        if request.user.user_type != 'volunteer' or request.user.volunteer_profile != match.volunteer:
+        if (not hasattr(request.user, 'userprofile') or 
+            request.user.userprofile.user_type != 'volunteer' or 
+            request.user.volunteer_profile != match.volunteer):
             return Response({"error": "Only the assigned volunteer can accept this match"}, 
                            status=status.HTTP_403_FORBIDDEN)
         
@@ -39,7 +41,6 @@ class MatchViewSet(viewsets.ModelViewSet):
                            status=status.HTTP_400_BAD_REQUEST)
         
         match.status = 'accepted'
-        match.accepted_at = timezone.now()
         match.save()
         
         # Update resource status
@@ -48,13 +49,11 @@ class MatchViewSet(viewsets.ModelViewSet):
         resource.save()
         
         # Create notification for beneficiary
-        Notification.objects.create(
-            user=match.beneficiary.user,
-            type='match_accepted',
+        create_notification(
+            recipient=match.beneficiary.user,
             title='Match Accepted',
             message=f'Your resource request for {resource.name} has been accepted by a volunteer.',
-            related_object_type='match',
-            related_object_id=match.id
+            link=f'/matches/{match.id}/'
         )
         
         serializer = self.get_serializer(match)
@@ -65,7 +64,9 @@ class MatchViewSet(viewsets.ModelViewSet):
         match = self.get_object()
         
         # Only the volunteer can complete a match
-        if request.user.user_type != 'volunteer' or request.user.volunteer_profile != match.volunteer:
+        if (not hasattr(request.user, 'userprofile') or 
+            request.user.userprofile.user_type != 'volunteer' or 
+            request.user.volunteer_profile != match.volunteer):
             return Response({"error": "Only the assigned volunteer can complete this match"}, 
                            status=status.HTTP_403_FORBIDDEN)
         
@@ -74,7 +75,6 @@ class MatchViewSet(viewsets.ModelViewSet):
                            status=status.HTTP_400_BAD_REQUEST)
         
         match.status = 'completed'
-        match.completed_at = timezone.now()
         match.save()
         
         # Update resource status
@@ -83,13 +83,11 @@ class MatchViewSet(viewsets.ModelViewSet):
         resource.save()
         
         # Create notification for beneficiary
-        Notification.objects.create(
-            user=match.beneficiary.user,
-            type='match_completed',
+        create_notification(
+            recipient=match.beneficiary.user,
             title='Resource Delivered',
             message=f'Your resource request for {resource.name} has been delivered.',
-            related_object_type='match',
-            related_object_id=match.id
+            link=f'/matches/{match.id}/'
         )
         
         serializer = self.get_serializer(match)
