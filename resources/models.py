@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-from accounts.models import BeneficiaryProfile, VolunteerProfile
+from accounts.models import Beneficiary, Volunteer
 
 class ResourceCategory(models.Model):
     name = models.CharField(max_length=100)
@@ -28,6 +28,8 @@ class Resource(models.Model):
         ('requested', 'Requested'),
         ('available', 'Available'),
         ('matched', 'Matched'),
+        ('in_transit', 'In Transit'),
+        ('delivered', 'Delivered'),
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
     )
@@ -38,8 +40,8 @@ class Resource(models.Model):
     category = models.ForeignKey(ResourceCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name="resources")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='requested')
     quantity = models.PositiveIntegerField(default=1)
-    requested_by = models.ForeignKey(BeneficiaryProfile, on_delete=models.CASCADE, null=True, blank=True, related_name="requested_resources")
-    offered_by = models.ForeignKey(VolunteerProfile, on_delete=models.CASCADE, null=True, blank=True, related_name="offered_resources")
+    requested_by = models.ForeignKey(Beneficiary, on_delete=models.CASCADE, null=True, blank=True, related_name="requested_resources")
+    offered_by = models.ForeignKey(Volunteer, on_delete=models.CASCADE, null=True, blank=True, related_name="offered_resources")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     expiry_date = models.DateTimeField(null=True, blank=True)

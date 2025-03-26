@@ -3,10 +3,16 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
+from resources.views import home
 
 urlpatterns = [
+    # Admin
     path('admin/', admin.site.urls),
-    path('', TemplateView.as_view(template_name='home.html'), name='home'),
+    
+    # Home page
+    path('', home, name='home'),
+    
+    # App URLs
     path('', include('accounts.urls')),
     path('', include('resources.urls')),
     path('', include('matches.urls')),
@@ -17,6 +23,8 @@ urlpatterns = [
     
     # API URLs
     path('api/', include('resourcematch.api_urls')),
+    path('api/accounts/', include('accounts.api_urls')),
+    path('api/resources/', include('resources.api_urls')),
     
     # Static pages
     path('about/', TemplateView.as_view(template_name='about.html'), name='about'),

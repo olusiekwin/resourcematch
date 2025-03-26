@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Cancel Resource - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row mb-5">
+    <div class="col-lg-8 mx-auto text-center">
+      <h1 class="display-5 fw-bold mb-4">Cancel Resource</h1>
+      <p class="lead mb-0">Are you sure you want to cancel this resource?</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-6 mx-auto">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+          <h4 class="mb-3">Resource Details</h4>
+          
+          <div class="d-flex align-items-center mb-3">
+            <div class="me-3">
+              {% if resource.image %}
+                <img src="{{ resource.image.url }}" alt="{{ resource.title }}" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
+              {% else %}
+                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                  <i class="bi bi-box display-6 text-muted"></i>
+                </div>
+              {% endif %}
+            </div>
+            <div>
+              <h5 class="mb-1">{{ resource.title }}</h5>
+              <p class="mb-0 text-muted">{{ resource.resource_type.name }}</p>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <span class="badge {% if resource.status == 'requested' %}bg-warning{% elif resource.status == 'available' %}bg-success{% elif resource.status == 'matched' %}bg-info{% elif resource.status == 'completed' %}bg-secondary{% else %}bg-danger{% endif %}">
+              {{ resource.get_status_display }}
+            </span>
+          </div>
+          
+          <div class="alert alert-warning">
+            <p class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i> Cancelling this resource will make it unavailable to users. This action cannot be undone.</p>
+          </div>
+          
+          <form method="post">
+            {% csrf_token %}
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+              <a href="{% url 'resource_detail' resource_id=resource.id %}" class="btn btn-outline-secondary">Go Back</a>
+              <button type="submit" class="btn btn-danger">Cancel Resource</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

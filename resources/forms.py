@@ -1,24 +1,37 @@
 from django import forms
-from .models import Resource, ResourceType
+from .models import Resource, ResourceType, ResourceCategory
 
 class ResourceTypeForm(forms.ModelForm):
     class Meta:
         model = ResourceType
-        fields = ['name', 'description', 'icon']
+        fields = ['name', 'description', 'icon', 'category']
+
+class ResourceCategoryForm(forms.ModelForm):
+    class Meta:
+        model = ResourceCategory
+        fields = ['name', 'description', 'icon', 'color']
 
 class ResourceForm(forms.ModelForm):
     class Meta:
         model = Resource
-        fields = ['resource_type', 'name', 'description', 'quantity', 'latitude', 'longitude']
+        fields = ['title', 'resource_type', 'category', 'description', 'quantity', 
+                  'image', 'latitude', 'longitude', 'address', 'city', 'state', 
+                  'postal_code', 'country', 'is_urgent', 'expiry_date']
         widgets = {
             'latitude': forms.HiddenInput(),
             'longitude': forms.HiddenInput(),
+            'expiry_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
 
 class ResourceRequestForm(forms.ModelForm):
     class Meta:
         model = Resource
-        fields = ['resource_type', 'name', 'description', 'quantity']
+        fields = ['title', 'resource_type', 'description', 'quantity', 
+                  'image', 'address', 'city', 'state', 'postal_code', 
+                  'country', 'is_urgent', 'expiry_date']
+        widgets = {
+            'expiry_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
         
     def __init__(self, *args, **kwargs):
         self.beneficiary = kwargs.pop('beneficiary', None)
@@ -40,7 +53,12 @@ class ResourceRequestForm(forms.ModelForm):
 class ResourceOfferForm(forms.ModelForm):
     class Meta:
         model = Resource
-        fields = ['resource_type', 'name', 'description', 'quantity']
+        fields = ['title', 'resource_type', 'description', 'quantity', 
+                  'image', 'address', 'city', 'state', 'postal_code', 
+                  'country', 'expiry_date']
+        widgets = {
+            'expiry_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
         
     def __init__(self, *args, **kwargs):
         self.volunteer = kwargs.pop('volunteer', None)
@@ -58,4 +76,48 @@ class ResourceOfferForm(forms.ModelForm):
         if commit:
             resource.save()
         return resource
+
+class ResourceSearchForm(forms.Form):
+    q = forms.CharField(
+        required=False,
+        label="Search",
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Search resources...',
+            'class': 'form-control',
+        })
+    )
+    
+    resource_type = forms.ModelChoiceField(
+        queryset=ResourceType.objects.all(),
+        required=False,
+        label="Resource Type",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    
+    category = forms.ModelChoiceField(
+        queryset=ResourceCategory.objects.all(),
+        required=False,
+        label="Category",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    
+    status = forms.ChoiceField(
+        choices=[('', 'All Statuses')] + list(Resource.STATUS_CHOICES),
+        required=False,
+        label="Status",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    
+    sort = forms.ChoiceField(
+        choices=[
+            ('newest', 'Newest First'),
+            ('oldest', 'Oldest First'),
+            ('name_asc', 'Name A-Z'),
+            ('name_desc', 'Name Z-A'),
+        ],
+        required=False,
+        initial='newest',
+        label="Sort By",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
 
