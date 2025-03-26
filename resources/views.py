@@ -2,13 +2,16 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Count
-from django.http import JsonResponse
 from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from django.utils import timezone
+from django.conf import settings
+
 from .models import Resource, ResourceType, ResourceCategory
 from .forms import ResourceForm, ResourceRequestForm, ResourceOfferForm, ResourceTypeForm
-from accounts.models import UserProfile
 from notifications.utils import create_notification
+from sms.utils import send_sms
 
 @login_required
 def resource_list(request):
@@ -19,10 +22,11 @@ def resource_list(request):
     resource_type = request.GET.get('type')
     category = request.GET.get('category')
     search_query = request.GET.get('q')
-    sort_by = request.GET.get('sort', 'newest')
     
     # Base queryset
-    resources = Resource.objects.all()
+    resources = Resource.objects.all().select_related(
+        'resource_type', 'requested_by', 'offered_by'
+    ).order_by('-created_at')
     
     # Apply filters
     if status:
@@ -32,11 +36,11 @@ def resource_list(request):
         resources = resources.filter(resource_type__id=resource_type)
     
     if category:
-        resources = resources.filter(category__id=category)
+        resources = resources.filter(resource_type__category__id=category)
     
     if search_query:
         resources = resources.filter(
-            Q(title__icontains=search_query) | 
+            Q(title__icontains=search_query) |
             Q(description__icontains=search_query) |
             Q(resource_type__name__icontains=search_query)
         )
@@ -56,39 +60,34 @@ def resource_list(request):
                 Q(status='requested')
             )
     
-    # Apply sorting
-    if sort_by == 'newest':
-        resources = resources.order_by('-created_at')
-    elif sort_by == 'oldest':
-        resources = resources.order_by('created_at')
-    elif sort_by == 'name_asc':
-        resources = resources.order_by('title')
-    elif sort_by == 'name_desc':
-        resources = resources.order_by('-title')
+    # Get all resource types and categories for filter dropdown
+    resource_types = ResourceType.objects.all()
+    categories = ResourceCategory.objects.all()
+    
+    # Add counts for each status
+    status_counts = {
+        'all': resources.count(),
+        'available': resources.filter(status='available').count(),
+        'requested': resources.filter(status='requested').count(),
+        'matched': resources.filter(status='matched').count(),
+        'completed': resources.filter(status='completed').count(),
+        'cancelled': resources.filter(status='cancelled').count(),
+    }
     
     # Pagination
     paginator = Paginator(resources, 12)  # Show 12 resources per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # Get all resource types and categories for filter dropdown
-    resource_types = ResourceType.objects.all()
-    resource_categories = ResourceCategory.objects.all()
-    
-    # Get resource counts by status for dashboard stats
-    status_counts = Resource.objects.values('status').annotate(count=Count('id'))
-    status_dict = {item['status']: item['count'] for item in status_counts}
-    
     return render(request, 'resources/resource_list.html', {
         'resources': page_obj,
         'resource_types': resource_types,
-        'resource_categories': resource_categories,
+        'categories': categories,
         'selected_status': status,
         'selected_type': resource_type,
         'selected_category': category,
         'search_query': search_query,
-        'sort_by': sort_by,
-        'status_counts': status_dict
+        'status_counts': status_counts,
     })
 
 @login_required
@@ -114,12 +113,6 @@ def resource_detail(request, resource_id):
         status=resource.status
     ).exclude(id=resource.id)[:3]
     
-    # Track resource view
-    if not request.session.get(f'viewed_resource_{resource_id}'):
-        resource.view_count += 1
-        resource.save()
-        request.session[f'viewed_resource_{resource_id}'] = True
-    
     # Check if user can request/offer this resource
     can_request = False
     can_offer = False
@@ -136,7 +129,7 @@ def resource_detail(request, resource_id):
         'has_feedback': has_feedback,
         'similar_resources': similar_resources,
         'can_request': can_request,
-        'can_offer': can_offer
+        'can_offer': can_offer,
     })
 
 @login_required
@@ -152,21 +145,46 @@ def request_resource(request):
             
             # Create notification for admin
             create_notification(
-                recipient=UserProfile.objects.filter(is_staff=True).first().user,
-                title="New Resource Request",
-                message=f"A new resource has been requested: {resource.title}",
-                link=f"/resources/{resource.id}/"
+                recipient=None,  # Admin notification
+                sender=request.user,
+                notification_type='resource_requested',
+                title='New Resource Request',
+                message=f'A new resource has been requested: {resource.title}',
+                related_object=resource
             )
+            
+            # Send SMS notification to admin
+            admin_phone = '+1234567890'  # Replace with actual admin phone
+            sms_message = f'New resource request: {resource.title} by {request.user.get_full_name()}'
+            send_sms(admin_phone, sms_message)
             
             messages.success(request, 'Resource request created successfully.')
             return redirect('resource_detail', resource_id=resource.id)
     else:
-        form = ResourceRequestForm(beneficiary=request.user.beneficiary_profile)
+        # Pre-fill form if coming from an available resource
+        resource_id = request.GET.get('resource_id')
+        if resource_id:
+            try:
+                available_resource = Resource.objects.get(id=resource_id, status='available')
+                form = ResourceRequestForm(
+                    beneficiary=request.user.beneficiary_profile,
+                    initial={
+                        'resource_type': available_resource.resource_type,
+                        'title': f"Request for {available_resource.title}",
+                        'description': f"I would like to request this resource: {available_resource.description}",
+                    }
+                )
+            except Resource.DoesNotExist:
+                form = ResourceRequestForm(beneficiary=request.user.beneficiary_profile)
+        else:
+            form = ResourceRequestForm(beneficiary=request.user.beneficiary_profile)
+    
+    # Get resource types for the form
+    resource_types = ResourceType.objects.all()
     
     return render(request, 'resources/request_resource.html', {
         'form': form,
-        'resource_types': ResourceType.objects.all(),
-        'resource_categories': ResourceCategory.objects.all()
+        'resource_types': resource_types
     })
 
 @login_required
@@ -182,21 +200,46 @@ def offer_resource(request):
             
             # Create notification for admin
             create_notification(
-                recipient=UserProfile.objects.filter(is_staff=True).first().user,
-                title="New Resource Offer",
-                message=f"A new resource has been offered: {resource.title}",
-                link=f"/resources/{resource.id}/"
+                recipient=None,  # Admin notification
+                sender=request.user,
+                notification_type='resource_offered',
+                title='New Resource Offer',
+                message=f'A new resource has been offered: {resource.title}',
+                related_object=resource
             )
+            
+            # Send SMS notification to admin
+            admin_phone = '+1234567890'  # Replace with actual admin phone
+            sms_message = f'New resource offer: {resource.title} by {request.user.get_full_name()}'
+            send_sms(admin_phone, sms_message)
             
             messages.success(request, 'Resource offer created successfully.')
             return redirect('resource_detail', resource_id=resource.id)
     else:
-        form = ResourceOfferForm(volunteer=request.user.volunteer_profile)
+        # Pre-fill form if coming from a requested resource
+        resource_id = request.GET.get('resource_id')
+        if resource_id:
+            try:
+                requested_resource = Resource.objects.get(id=resource_id, status='requested')
+                form = ResourceOfferForm(
+                    volunteer=request.user.volunteer_profile,
+                    initial={
+                        'resource_type': requested_resource.resource_type,
+                        'title': f"Offer for {requested_resource.title}",
+                        'description': f"I would like to offer this resource: {requested_resource.description}",
+                    }
+                )
+            except Resource.DoesNotExist:
+                form = ResourceOfferForm(volunteer=request.user.volunteer_profile)
+        else:
+            form = ResourceOfferForm(volunteer=request.user.volunteer_profile)
+    
+    # Get resource types for the form
+    resource_types = ResourceType.objects.all()
     
     return render(request, 'resources/offer_resource.html', {
         'form': form,
-        'resource_types': ResourceType.objects.all(),
-        'resource_categories': ResourceCategory.objects.all()
+        'resource_types': resource_types
     })
 
 @login_required
@@ -216,26 +259,27 @@ def edit_resource(request, resource_id):
         messages.error(request, 'You do not have permission to edit this resource.')
         return redirect('resource_list')
     
+    # Only allow editing if resource is not matched or completed
+    if resource.status in ['matched', 'completed']:
+        messages.error(request, 'You cannot edit a resource that is already matched or completed.')
+        return redirect('resource_detail', resource_id=resource.id)
+    
     if request.method == 'POST':
         form = ResourceForm(request.POST, request.FILES, instance=resource)
         if form.is_valid():
-            updated_resource = form.save()
-            updated_resource.updated_at = timezone.now()
-            updated_resource.save()
-            
+            form.save()
             messages.success(request, 'Resource updated successfully.')
             return redirect('resource_detail', resource_id=resource.id)
     else:
         form = ResourceForm(instance=resource)
     
     return render(request, 'resources/edit_resource.html', {
-        'form': form, 
-        'resource': resource,
-        'resource_types': ResourceType.objects.all(),
-        'resource_categories': ResourceCategory.objects.all()
+        'form': form,
+        'resource': resource
     })
 
 @login_required
+@require_POST
 def cancel_resource(request, resource_id):
     resource = get_object_or_404(Resource, id=resource_id)
     
@@ -252,50 +296,79 @@ def cancel_resource(request, resource_id):
         messages.error(request, 'You do not have permission to cancel this resource.')
         return redirect('resource_list')
     
-    if request.method == 'POST':
-        resource.status = 'cancelled'
-        resource.updated_at = timezone.now()
-        resource.save()
-        
-        # Create notification for admin
-        create_notification(
-            recipient=UserProfile.objects.filter(is_staff=True).first().user,
-            title="Resource Cancelled",
-            message=f"A resource has been cancelled: {resource.title}",
-            link=f"/resources/{resource.id}/"
-        )
-        
-        messages.success(request, 'Resource cancelled successfully.')
-        return redirect('resource_list')
+    # Only allow cancellation if resource is not matched or completed
+    if resource.status in ['matched', 'completed']:
+        messages.error(request, 'You cannot cancel a resource that is already matched or completed.')
+        return redirect('resource_detail', resource_id=resource.id)
     
-    return render(request, 'resources/cancel_resource.html', {'resource': resource})
+    resource.status = 'cancelled'
+    resource.cancelled_at = timezone.now()
+    resource.save()
+    
+    # Create notification for admin
+    create_notification(
+        recipient=None,  # Admin notification
+        sender=request.user,
+        notification_type='resource_cancelled',
+        title='Resource Cancelled',
+        message=f'A resource has been cancelled: {resource.title}',
+        related_object=resource
+    )
+    
+    messages.success(request, 'Resource cancelled successfully.')
+    return redirect('resource_list')
 
 @login_required
 def resource_type_list(request):
-    resource_types = ResourceType.objects.all().annotate(resource_count=Count('resources'))
+    resource_types = ResourceType.objects.all().annotate(
+        resource_count=Count('resources')
+    )
+    
+    # Group by category
+    categories = ResourceCategory.objects.all().prefetch_related('resource_types')
     
     return render(request, 'resources/resource_type_list.html', {
-        'resource_types': resource_types
+        'resource_types': resource_types,
+        'categories': categories
     })
 
 @login_required
 def resource_type_detail(request, type_id):
     resource_type = get_object_or_404(ResourceType, id=type_id)
-    resources = Resource.objects.filter(resource_type=resource_type)
+    
+    # Get resources of this type
+    resources = Resource.objects.filter(resource_type=resource_type).order_by('-created_at')
+    
+    # Filter by status if provided
+    status = request.GET.get('status')
+    if status:
+        resources = resources.filter(status=status)
     
     # Pagination
     paginator = Paginator(resources, 12)  # Show 12 resources per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Status counts
+    status_counts = {
+        'all': resources.count(),
+        'available': resources.filter(status='available').count(),
+        'requested': resources.filter(status='requested').count(),
+        'matched': resources.filter(status='matched').count(),
+        'completed': resources.filter(status='completed').count(),
+        'cancelled': resources.filter(status='cancelled').count(),
+    }
+    
     return render(request, 'resources/resource_type_detail.html', {
         'resource_type': resource_type,
-        'resources': page_obj
+        'resources': page_obj,
+        'selected_status': status,
+        'status_counts': status_counts
     })
 
 @login_required
 def resource_category_list(request):
-    categories = ResourceCategory.objects.all().annotate(resource_count=Count('resources'))
+    categories = ResourceCategory.objects.all().prefetch_related('resource_types')
     
     return render(request, 'resources/resource_category_list.html', {
         'categories': categories
@@ -304,16 +377,41 @@ def resource_category_list(request):
 @login_required
 def resource_category_detail(request, category_id):
     category = get_object_or_404(ResourceCategory, id=category_id)
-    resources = Resource.objects.filter(category=category)
+    
+    # Get resource types in this category
+    resource_types = ResourceType.objects.filter(category=category).annotate(
+        resource_count=Count('resources')
+    )
+    
+    # Get resources in this category
+    resources = Resource.objects.filter(resource_type__category=category).order_by('-created_at')
+    
+    # Filter by status if provided
+    status = request.GET.get('status')
+    if status:
+        resources = resources.filter(status=status)
     
     # Pagination
     paginator = Paginator(resources, 12)  # Show 12 resources per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Status counts
+    status_counts = {
+        'all': resources.count(),
+        'available': resources.filter(status='available').count(),
+        'requested': resources.filter(status='requested').count(),
+        'matched': resources.filter(status='matched').count(),
+        'completed': resources.filter(status='completed').count(),
+        'cancelled': resources.filter(status='cancelled').count(),
+    }
+    
     return render(request, 'resources/resource_category_detail.html', {
         'category': category,
-        'resources': page_obj
+        'resource_types': resource_types,
+        'resources': page_obj,
+        'selected_status': status,
+        'status_counts': status_counts
     })
 
 @login_required
@@ -337,59 +435,167 @@ def resource_map(request):
                 Q(status='requested')
             )
     
+    # Filter by type if provided
+    resource_type = request.GET.get('type')
+    if resource_type:
+        resources = resources.filter(resource_type__id=resource_type)
+    
+    # Filter by category if provided
+    category = request.GET.get('category')
+    if category:
+        resources = resources.filter(resource_type__category__id=category)
+    
+    # Filter by status if provided
+    status = request.GET.get('status')
+    if status:
+        resources = resources.filter(status=status)
+    
     # Get all resource types and categories for filter
     resource_types = ResourceType.objects.all()
-    resource_categories = ResourceCategory.objects.all()
+    categories = ResourceCategory.objects.all()
     
-    # Prepare resource data for map
+    # Prepare resource data for the map
     resource_data = []
     for resource in resources:
         resource_data.append({
             'id': resource.id,
             'title': resource.title,
             'type': resource.resource_type.name,
-            'category': resource.category.name if resource.category else '',
+            'category': resource.resource_type.category.name if resource.resource_type.category else 'Uncategorized',
             'status': resource.get_status_display(),
             'latitude': float(resource.latitude),
             'longitude': float(resource.longitude),
-            'url': f'/resources/{resource.id}/'
+            'url': f'/resources/{resource.id}/',
+            'icon': resource.resource_type.icon_class if resource.resource_type.icon_class else 'bi-box',
+            'color': resource.get_status_color(),
         })
     
     return render(request, 'resources/resource_map.html', {
         'resources': resources,
         'resource_types': resource_types,
-        'resource_categories': resource_categories,
-        'resource_data_json': resource_data
+        'categories': categories,
+        'selected_type': resource_type,
+        'selected_category': category,
+        'selected_status': status,
+        'resource_data_json': resource_data,
+        'map_api_key': settings.MAP_API_KEY,
     })
 
 @login_required
 def beneficiary_categories(request):
-    categories = ResourceCategory.objects.all()
+    categories = ResourceCategory.objects.all().prefetch_related('resource_types')
     
     return render(request, 'resources/beneficiary_categories.html', {
         'categories': categories
     })
 
 @login_required
-def resource_search_api(request):
-    """API endpoint for searching resources via AJAX"""
-    search_query = request.GET.get('q', '')
-    resource_type = request.GET.get('type')
-    category = request.GET.get('category')
+@require_POST
+def resource_action(request, resource_id):
+    resource = get_object_or_404(Resource, id=resource_id)
+    action = request.POST.get('action')
+    
+    if action == 'request':
+        # Check if user is a beneficiary
+        if not hasattr(request.user, 'userprofile') or request.user.userprofile.user_type != 'beneficiary':
+            return JsonResponse({'status': 'error', 'message': 'Only beneficiaries can request resources.'})
+        
+        # Check if resource is available
+        if resource.status != 'available':
+            return JsonResponse({'status': 'error', 'message': 'This resource is not available for request.'})
+        
+        # Create a new resource request based on this available resource
+        new_resource = Resource.objects.create(
+            resource_type=resource.resource_type,
+            title=f"Request for {resource.title}",
+            description=f"I would like to request this resource: {resource.description}",
+            requested_by=request.user.beneficiary_profile,
+            status='requested',
+            latitude=resource.latitude,
+            longitude=resource.longitude,
+        )
+        
+        # Create notification for the volunteer who offered the resource
+        if resource.offered_by:
+            create_notification(
+                recipient=resource.offered_by.user,
+                sender=request.user,
+                notification_type='resource_requested',
+                title='Resource Requested',
+                message=f'Your offered resource "{resource.title}" has been requested.',
+                related_object=new_resource
+            )
+            
+            # Send SMS notification
+            if resource.offered_by.phone:
+                sms_message = f'Your offered resource "{resource.title}" has been requested by {request.user.get_full_name()}.'
+                send_sms(resource.offered_by.phone, sms_message)
+        
+        return JsonResponse({
+            'status': 'success', 
+            'message': 'Resource requested successfully.',
+            'redirect_url': f'/resources/{new_resource.id}/'
+        })
+    
+    elif action == 'offer':
+        # Check if user is a volunteer
+        if not hasattr(request.user, 'userprofile') or request.user.userprofile.user_type != 'volunteer':
+            return JsonResponse({'status': 'error', 'message': 'Only volunteers can offer resources.'})
+        
+        # Check if resource is requested
+        if resource.status != 'requested':
+            return JsonResponse({'status': 'error', 'message': 'This resource is not available for offering.'})
+        
+        # Create a new resource offer based on this requested resource
+        new_resource = Resource.objects.create(
+            resource_type=resource.resource_type,
+            title=f"Offer for {resource.title}",
+            description=f"I would like to offer this resource: {resource.description}",
+            offered_by=request.user.volunteer_profile,
+            status='available',
+            latitude=resource.latitude,
+            longitude=resource.longitude,
+        )
+        
+        # Create notification for the beneficiary who requested the resource
+        if resource.requested_by:
+            create_notification(
+                recipient=resource.requested_by.user,
+                sender=request.user,
+                notification_type='resource_offered',
+                title='Resource Offered',
+                message=f'Your requested resource "{resource.title}" has been offered.',
+                related_object=new_resource
+            )
+            
+            # Send SMS notification
+            if resource.requested_by.phone:
+                sms_message = f'Your requested resource "{resource.title}" has been offered by {request.user.get_full_name()}.'
+                send_sms(resource.requested_by.phone, sms_message)
+        
+        return JsonResponse({
+            'status': 'success', 
+            'message': 'Resource offered successfully.',
+            'redirect_url': f'/resources/{new_resource.id}/'
+        })
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid action.'})
+
+@login_required
+def search_resources(request):
+    query = request.GET.get('q', '')
+    
+    if not query:
+        return JsonResponse({'results': []})
     
     resources = Resource.objects.filter(
-        Q(title__icontains=search_query) | 
-        Q(description__icontains=search_query)
-    )
-    
-    if resource_type:
-        resources = resources.filter(resource_type__id=resource_type)
-    
-    if category:
-        resources = resources.filter(category__id=category)
+        Q(title__icontains=query) |
+        Q(description__icontains=query) |
+        Q(resource_type__name__icontains=query)
+    )[:10]
     
     results = []
-    for resource in resources[:10]:  # Limit to 10 results
+    for resource in resources:
         results.append({
             'id': resource.id,
             'title': resource.title,

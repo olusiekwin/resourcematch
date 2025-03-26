@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+
+{% block title %}SMS Dashboard - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <h1 class="display-5 fw-bold mb-3">SMS Dashboard</h1>
+            <p class="lead">Manage and monitor SMS communications with beneficiaries, volunteers, and donors.</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+            <a href="{% url 'sms_logs' %}" class="btn btn-outline-primary me-2">View All Logs</a>
+            <a href="{% url 'sms_templates' %}" class="btn btn-primary">Manage Templates</a>
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="card shadow-sm sms-stats-card">
+                <div class="card-body">
+                    <div class="stats-icon">
+                        <i class="bi bi-chat-dots"></i>
+                    </div>
+                    <div class="stats-number">{{ total_sent }}</div>
+                    <div class="stats-label">Total SMS Sent</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm sms-stats-card">
+                <div class="card-body">
+                    <div class="stats-icon text-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="stats-number">{{ successful }}</div>
+                    <div class="stats-label">Successful Deliveries</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm sms-stats-card">
+                <div class="card-body">
+                    <div class="stats-icon text-danger">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <div class="stats-number">{{ failed }}</div>
+                    <div class="stats-label">Failed Deliveries</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Send Single SMS</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'send_single_sms' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="recipient" class="form-label">Recipient</label>
+                            {{ sms_form.recipient }}
+                            <div class="form-text">{{ sms_form.recipient.help_text }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Message</label>
+                            {{ sms_form.message }}
+                            <div class="form-text">{{ sms_form.message.help_text }}</div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Send SMS</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Send Bulk SMS</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'send_bulk_sms' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="recipients" class="form-label">Recipients</label>
+                            {{ bulk_sms_form.recipients }}
+                            <div class="form-text">{{ bulk_sms_form.recipients.help_text }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Message</label>
+                            {{ bulk_sms_form.message }}
+                            <div class="form-text">{{ bulk_sms_form.message.help_text }}</div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Send Bulk SMS</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">SMS Templates</h5>
+                    <a href="{% url 'sms_templates' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if templates %}
+                        <div class="list-group">
+                            {% for template in templates|slice:":5" %}
+                                <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#templateModal{{ template.id }}">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ template.name }}</h6>
+                                        <small class="text-muted">{{ template.template_key }}</small>
+                                    </div>
+                                    <p class="mb-1 text-truncate">{{ template.content }}</p>
+                                </a>
+                                
+                                <!-- Template Modal -->
+                                <div class="modal fade" id="templateModal{{ template.id }}" tabindex="-1" aria-labelledby="templateModalLabel{{ template.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="templateModalLabel{{ template.id }}">{{ template.name }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form method="post" action="{% url 'send_template' %}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="template_id" value="{{ template.id }}">
+                                                    
+                                                    <div class="mb-3">
+                                                        <label for="recipient{{ template.id }}" class="form-label">Recipient</label>
+                                                        <input type="text" class="form-control" id="recipient{{ template.id }}" name="recipient" placeholder="+254711XXXYYY" required>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Template Content</label>
+                                                        <div class="form-control bg-light" style="height: auto; min-height: 100px;">{{ template.content }}</div>
+                                                    </div>
+                                                    
+                                                    <!-- Dynamic variable fields based on template content -->
+                                                    {% for var in template.content|findvars %}
+                                                        <div class="mb-3">
+                                                            <label for="var_{{ var }}{{ template.id }}" class="form-label">{{ var|title }}</label>
+                                                            <input type="text" class="form-control" id="var_{{ var }}{{ template.id }}" name="var_{{ var }}" placeholder="Enter {{ var }}" required>
+                                                        </div>
+                                                    {% endfor %}
+                                                    
+                                                    <div class="d-grid">
+                                                        <button type="submit" class="btn btn-primary">Send Template SMS</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center py-3">No templates available. <a href="{% url 'sms_templates' %}">Create a template</a>.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent SMS Logs</h5>
+                    <a href="{% url 'sms_logs' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_logs %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Recipient</th>
+                                        <th>Message</th>
+                                        <th>Status</th>
+                                        <th>Sent At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in recent_logs %}
+                                        <tr>
+                                            <td>{{ log.recipient }}</td>
+                                            <td>
+                                                {% if log.message|length > 30 %}
+                                                    {{ log.message|slice:":30" }}...
+                                                {% else %}
+                                                    {{ log.message }}
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if log.status == 'Success' %}
+                                                    <span class="badge bg-success">{{ log.status }}</span>
+                                                {% elif 'Error' in log.status %}
+                                                    <span class="badge bg-danger">Failed</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ log.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ log.sent_at|date:"M d, Y H:i" }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center py-3">No SMS logs available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

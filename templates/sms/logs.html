@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}SMS Logs - Resource Match{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <h1 class="display-5 fw-bold mb-3">SMS Logs</h1>
+            <p class="lead">View and filter all SMS messages sent through the platform.</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+            <a href="{% url 'sms_dashboard' %}" class="btn btn-outline-primary">Back to Dashboard</a>
+        </div>
+    </div>
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Filter SMS Logs</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'sms_logs' %}">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">All Statuses</option>
+                            <option value="Success" {% if status_filter == 'Success' %}selected{% endif %}>Success</option>
+                            <option value="Failed" {% if status_filter == 'Failed' %}selected{% endif %}>Failed</option>
+                            <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="start_date" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="end_date" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="recipient" class="form-label">Recipient</label>
+                        <input type="text" class="form-control" id="recipient" name="recipient" placeholder="Phone number" value="{{ recipient }}">
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        <a href="{% url 'sms_logs' %}" class="btn btn-outline-secondary">Clear Filters</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            {% if logs %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Recipient</th>
+                                <th>Message</th>
+                                <th>Status</th>
+                                <th>Cost</th>
+                                <th>Sent At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                                <tr>
+                                    <td>{{ log.id }}</td>
+                                    <td>{{ log.recipient }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-link p-0" data-bs-toggle="modal" data-bs-target="#messageModal{{ log.id }}">
+                                            {% if log.message|length > 30 %}
+                                                {{ log.message|slice:":30" }}...
+                                            {% else %}
+                                                {{ log.message }}
+                                            {% endif %}
+                                        </button>
+                                        
+                                        <!-- Message Modal -->
+                                        <div class="modal fade" id="messageModal{{ log.id }}" tabindex="-1" aria-labelledby="messageModalLabel{{ log.id }}" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="messageModalLabel{{ log.id }}">SMS Message</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>{{ log.message }}</p>
+                                                        <hr>
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <p><strong>Recipient:</strong> {{ log.recipient }}</p>
+                                                                <p><strong>Status:</strong> {{ log.status }}</p>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <p><strong>Message ID:</strong> {{ log.message_id|default:"N/A" }}</p>
+                                                                <p><strong>Sent At:</strong> {{ log.sent_at|date:"M d, Y H:i:s" }}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if log.status == 'Success' %}
+                                            <span class="badge bg-success">{{ log.status }}</span>
+                                        {% elif 'Error' in log.status %}
+                                            <span class="badge bg-danger">Failed</span>
+                                            <i class="bi bi-info-circle text-muted" data-bs-toggle="tooltip" title="{{ log.status }}"></i>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ log.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ log.cost }}</td>
+                                    <td>{{ log.sent_at|date:"M d, Y H:i" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if logs.has_other_pages %}
+                    <div class="d-flex justify-content-center mt-4">
+                        <nav aria-label="SMS logs pagination">
+                            <ul class="pagination">
+                                {% if logs.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ logs.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}{% if recipient %}&recipient={{ recipient }}{% endif %}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for i in logs.paginator.page_range %}
+                                    {% if logs.number == i %}
+                                        <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                    {% else %}
+                                        <li class="page-item"><a class="page-link" href="?page={{ i }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}{% if recipient %}&recipient={{ recipient }}{% endif %}">{{ i }}</a></li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if logs.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ logs.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}{% if recipient %}&recipient={{ recipient }}{% endif %}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-chat-dots text-muted" style="font-size: 3rem;"></i>
+                    <p class="mt-3">No SMS logs found matching your criteria.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

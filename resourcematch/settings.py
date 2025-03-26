@@ -13,7 +13,7 @@ SECRET_KEY = 'django-insecure-your-secret-key-here'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -24,17 +24,22 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     
     # Third-party apps
+    'crispy_forms',
+    'crispy_bootstrap5',
     'rest_framework',
+    'django_filters',
     
     # Project apps
-    'accounts',
-    'resources',
-    'matches',
-    'feedback',
-    'notifications',
-    'campaigns',
+    'accounts.apps.AccountsConfig',
+    'resources.apps.ResourcesConfig',
+    'matches.apps.MatchesConfig',
+    'feedback.apps.FeedbackConfig',
+    'notifications.apps.NotificationsConfig',
+    'campaigns.apps.CampaignsConfig',
+    'sms.apps.SmsConfig',  # New SMS app
 ]
 
 MIDDLEWARE = [
@@ -60,7 +65,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'notifications.context_processors.notifications',  # Add this line
+                'notifications.context_processors.notifications',
             ],
         },
     },
@@ -110,7 +115,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
@@ -127,22 +132,38 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Authentication settings
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard'
+LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 
-# Email settings
+# Crispy Forms
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# Email settings (for development)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Africa's Talking API Settings
+AFRICAS_TALKING_USERNAME = 'your_username'
+AFRICAS_TALKING_API_KEY = 'your_api_key'
+AFRICAS_TALKING_SENDER_ID = 'ResourceMatch'
+
+# Map settings
+MAP_API_KEY = 'your_map_api_key'
+
+# Payment gateway settings
+PAYMENT_API_KEY = 'your_payment_api_key'
 
 # REST Framework settings
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 

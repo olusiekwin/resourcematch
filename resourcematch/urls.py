@@ -7,13 +7,15 @@ from django.views.generic import TemplateView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', TemplateView.as_view(template_name='home.html'), name='home'),
-    path('', include('accounts.urls')),
-    path('', include('resources.urls')),
-    path('', include('matches.urls')),
-    path('', include('feedback.urls')),
-    path('', include('notifications.urls')),
-    path('', include('campaigns.urls')),
-    path('', include('sms_integration.urls')),
+    
+    # App URLs
+    path('accounts/', include('accounts.urls')),
+    path('resources/', include('resources.urls')),
+    path('matches/', include('matches.urls')),
+    path('feedback/', include('feedback.urls')),
+    path('notifications/', include('notifications.urls')),
+    path('campaigns/', include('campaigns.urls')),
+    path('sms/', include('sms.urls')),
     
     # API URLs
     path('api/', include('resourcematch.api_urls')),
@@ -25,8 +27,6 @@ urlpatterns = [
     path('terms/', TemplateView.as_view(template_name='terms.html'), name='terms'),
     path('faq/', TemplateView.as_view(template_name='faq.html'), name='faq'),
     path('how-it-works/', TemplateView.as_view(template_name='how_it_works.html'), name='how_it_works'),
-    path('impact/', TemplateView.as_view(template_name='impact.html'), name='impact'),
-    path('partners/', TemplateView.as_view(template_name='partners.html'), name='partners'),
 ]
 
 # Serve static and media files in development

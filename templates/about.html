@@ -83,26 +83,45 @@
     <div class="row mb-5">
         <div class="col-md-6">
             <h2 class="mb-4">Our Team</h2>
-            <p>Resource Match is powered by a dedicated team of professionals who are passionate about making a difference. Our diverse team brings together expertise in social work, technology, community organizing, and nonprofit management.</p>
-            <p>We work closely with community partners, healthcare providers, social service agencies, and local governments to ensure we're addressing the most pressing needs in our community.</p>
+            <p>Resource Match is powered by a dedicated team of professionals who are passionate about making a difference. Our diverse team brings together expertise in social work, technology, healthcare, and community development.</p>
+            <p>We work closely with community organizations, healthcare providers, and government agencies to ensure that our platform addresses the  healthcare providers, and government agencies to ensure that our platform addresses the most pressing needs of our community.</p>
+            <p>Our team is committed to continuous improvement and innovation, always seeking new ways to enhance our services and reach more people in need.</p>
         </div>
         <div class="col-md-6">
             <div class="row g-4">
                 <div class="col-6">
                     <div class="card border-0 shadow-sm">
-                        <img src="/static/images/team-1.jpg" class="card-img-top" alt="Team Member">
-                        <div class="card-body text-center">
-                            <h5 class="card-title mb-1">Sarah Johnson</h5>
-                            <p class="text-muted small">Executive Director</p>
+                        <div class="card-body text-center p-4">
+                            <img src="/static/images/team-1.jpg" alt="Team Member" class="rounded-circle mb-3" width="100">
+                            <h5>Sarah Johnson</h5>
+                            <p class="text-muted">Executive Director</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="card border-0 shadow-sm">
-                        <img src="/static/images/team-2.jpg" class="card-img-top" alt="Team Member">
-                        <div class="card-body text-center">
-                            <h5 class="card-title mb-1">Michael Chen</h5>
-                            <p class="text-muted small">Technology Director</p>
+                        <div class="card-body text-center p-4">
+                            <img src="/static/images/team-2.jpg" alt="Team Member" class="rounded-circle mb-3" width="100">
+                            <h5>Michael Chen</h5>
+                            <p class="text-muted">Technology Lead</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <img src="/static/images/team-3.jpg" alt="Team Member" class="rounded-circle mb-3" width="100">
+                            <h5>Amina Patel</h5>
+                            <p class="text-muted">Community Outreach</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <img src="/static/images/team-4.jpg" alt="Team Member" class="rounded-circle mb-3" width="100">
+                            <h5>David Ochieng</h5>
+                            <p class="text-muted">Operations Manager</p>
                         </div>
                     </div>
                 </div>
@@ -113,36 +132,31 @@
     <div class="row mb-5">
         <div class="col-lg-8 mx-auto text-center">
             <h2 class="mb-4">Our Impact</h2>
-            <div class="row g-4 text-center">
-                <div class="col-md-3 col-6">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body">
-                            <h3 class="display-4 fw-bold text-primary">500+</h3>
-                            <p class="text-muted">Beneficiaries Served</p>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="display-4 fw-bold text-primary mb-3">5,000+</div>
+                            <h4>Resources Matched</h4>
+                            <p>Successfully connected resources with those who need them most</p>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 col-6">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body">
-                            <h3 class="display-4 fw-bold text-primary">300+</h3>
-                            <p class="text-muted">Active Volunteers</p>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="display-4 fw-bold text-primary mb-3">3,200+</div>
+                            <h4>Beneficiaries Served</h4>
+                            <p>Individuals and families who have received support through our platform</p>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 col-6">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body">
-                            <h3 class="display-4 fw-bold text-primary">1,200+</h3>
-                            <p class="text-muted">Resources Matched</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body">
-                            <h3 class="display-4 fw-bold text-primary">20+</h3>
-                            <p class="text-muted">Community Partners</p>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="display-4 fw-bold text-primary mb-3">1,800+</div>
+                            <h4>Volunteers Engaged</h4>
+                            <p>Dedicated individuals who have offered their time and resources</p>
                         </div>
                     </div>
                 </div>
@@ -153,11 +167,10 @@
     <div class="row">
         <div class="col-lg-8 mx-auto text-center">
             <h2 class="mb-4">Join Our Mission</h2>
-            <p class="lead mb-4">There are many ways to get involved with Resource Match and make a difference in your community.</p>
-            <div class="d-flex flex-wrap justify-content-center gap-3">
-                <a href="{% url 'register' %}" class="btn btn-primary btn-lg">Become a Volunteer</a>
-                <a href="{% url 'register' %}" class="btn btn-outline-primary btn-lg">Register as a Beneficiary</a>
-                <a href="{% url 'contact' %}" class="btn btn-outline-secondary btn-lg">Contact Us</a>
+            <p class="lead mb-4">Whether you're looking for support, want to volunteer, or wish to donate resources, we welcome you to join our community.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'register' %}" class="btn btn-primary btn-lg">Sign Up Today</a>
+                <a href="{% url 'contact' %}" class="btn btn-outline-primary btn-lg">Contact Us</a>
             </div>
         </div>
     </div>
